@@ -5,9 +5,7 @@ import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 public class Main {
 
