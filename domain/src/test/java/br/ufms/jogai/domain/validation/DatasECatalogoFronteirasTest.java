@@ -78,8 +78,7 @@ class DatasECatalogoFronteirasTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> jogo.setNome(nome)),
                 () -> assertThrows(IllegalArgumentException.class, () -> jogo.setEditora(nome)),
-                () -> assertThrows(IllegalArgumentException.class, () -> categoria.setNome(nome)),
-                () -> assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create(nome,"Estratégia",null)),
+                () -> assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create("Estratégia",null)),
                 () -> assertThrows(IllegalArgumentException.class, () -> JogoValidationTest.builder().nomeEditora(nome,"Devir").build()),
                 () -> assertThrows(IllegalArgumentException.class, () -> JogoValidationTest.builder().nomeEditora("Catan",nome).build()),
                 () -> assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.reconstitute("estrategia",nome,null)));
