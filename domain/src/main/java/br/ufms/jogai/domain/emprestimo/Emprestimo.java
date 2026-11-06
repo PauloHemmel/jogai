@@ -3,6 +3,7 @@ package br.ufms.jogai.domain.emprestimo;
 import br.ufms.jogai.domain.jogo.Exemplar;
 import br.ufms.jogai.domain.shared.Entidade;
 import br.ufms.jogai.domain.usuario.UsuarioInfo;
+import br.ufms.jogai.domain.util.Validar;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -20,7 +21,7 @@ public class Emprestimo extends Entidade<UUID> {
     private Collection<ItemEmprestimo> itens;
 
     protected Emprestimo(UUID uuid) {
-        super(uuid);
+        super(Validar.uuid(uuid));
     }
 
     public void adicionarItem(Exemplar exemplar) {

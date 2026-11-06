@@ -9,8 +9,8 @@ public class CategoriaJogo extends Entidade<String> {
     private String nome;
     private String descricao;
 
-    private CategoriaJogo(String id, String nome, String descricao) {
-        super(Validar.chaveCategoria(id));
+    private CategoriaJogo(String tag, String nome, String descricao) {
+        super(Validar.tagCategoriaJogo(tag));
 
         setNome(nome);
         setDescricao(descricao);
@@ -32,11 +32,15 @@ public class CategoriaJogo extends Entidade<String> {
         this.descricao = descricao != null ? descricao.trim() : null;
     }
 
+    public String getTag() {
+        return getId();
+    }
+
     public static CategoriaJogo create(String chave, String nome, String descricao) {
         return new CategoriaJogo(chave, nome, descricao);
     }
 
-    public static CategoriaJogo reconstitute(String id, String nome, String descricao) {
-        return new CategoriaJogo(id, nome, descricao);
+    public static CategoriaJogo reconstitute(String tag, String nome, String descricao) {
+        return new CategoriaJogo(tag, nome, descricao);
     }
 }

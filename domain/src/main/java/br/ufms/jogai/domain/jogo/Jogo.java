@@ -18,6 +18,20 @@ public class Jogo extends Entidade<UUID> {
     private String descricao;
     private boolean ativo;
 
+    public Jogo(
+            String nome,
+            String editora,
+            Year anoLancamento,
+            NumeroJogadores numeroJogadores,
+            FaixaEtaria faixaEtaria,
+            DuracaoPartida duracaoPartida,
+            Set<CategoriaJogo> categorias,
+            String descricao
+    ) {
+        this(UUID.randomUUID(), nome, editora, anoLancamento, numeroJogadores, faixaEtaria,
+                duracaoPartida, categorias, descricao, true);
+    }
+
     private Jogo(
             UUID id,
             String nome,
@@ -30,7 +44,7 @@ public class Jogo extends Entidade<UUID> {
             String descricao,
             boolean ativo
     ) {
-        super(id);
+        super(Validar.uuid(id));
 
         setNome(nome);
         setEditora(editora);

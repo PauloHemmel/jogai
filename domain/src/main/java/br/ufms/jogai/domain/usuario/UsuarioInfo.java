@@ -1,5 +1,7 @@
 package br.ufms.jogai.domain.usuario;
 
+import br.ufms.jogai.domain.util.Validar;
+
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.UUID;
@@ -11,6 +13,10 @@ public record UsuarioInfo(
         String telefone,
         LocalDate dataNascimento
 ) {
+
+    public UsuarioInfo {
+        id = Validar.uuid(id);
+    }
 
     public UsuarioInfo(Usuario usuario) {
         this(usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento());

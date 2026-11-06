@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Objects;
-import java.util.Locale;
 import java.util.UUID;
 
 public class Usuario extends Entidade<UUID> {
@@ -16,6 +15,7 @@ public class Usuario extends Entidade<UUID> {
     private String email;
     private String telefone;
     private LocalDate dataNascimento;
+    private final AvaliacaoMediaUsuario avaliacao;
     private final Instant dataCadastro;
     private StatusUsuario status;
 
@@ -25,16 +25,18 @@ public class Usuario extends Entidade<UUID> {
             String email,
             String telefone,
             LocalDate dataNascimento,
+            AvaliacaoMediaUsuario avaliacao,
             Instant dataCadastro,
             StatusUsuario status
     ) {
-        super(id);
+        super(Validar.uuid(id));
 
         setNome(nome);
         setEmail(email);
         setTelefone(telefone);
         setDataNascimento(dataNascimento);
 
+        this.avaliacao = Objects.requireNonNull(avaliacao, "A avaliação do usuário não pode ser nula");
         this.dataCadastro = Validar.dataCadastro(dataCadastro);
         this.status = Objects.requireNonNull(status, "O status do usuário não pode ser nulo");
     }
@@ -52,12 +54,7 @@ public class Usuario extends Entidade<UUID> {
     }
 
     public void setEmail(String email) {
-        this.email = normalizarEmail(email);
-    }
-
-    /** Representação canônica usada pelo usuário e pelas consultas por email. */
-    public static String normalizarEmail(String email) {
-        return Validar.email(Objects.requireNonNull(email).strip(), true).toLowerCase(Locale.ROOT);
+        this.email = Validar.email(email);
     }
 
     public String getTelefone() {
@@ -101,6 +98,30 @@ public class Usuario extends Entidade<UUID> {
         return status;
     }
 
+    public void avaliarComoComodante(int nota) {
+        avaliacao.avaliarComoComodante(nota);
+    }
+
+    public void avaliarComoComodatario(int nota) {
+        avaliacao.avaliarComoComodatario(nota);
+    }
+
+    public long getQtdAvaliacoesComodante() {
+        return avaliacao.getQtdAvaliacoesComodante();
+    }
+
+    public double getAvaliacaoMediaComodante() {
+        return avaliacao.getMediaAvaliacaoComodante();
+    }
+
+    public long getQtdAvaliacoesComodatario() {
+        return avaliacao.getQtdAvaliacoesComodatario();
+    }
+
+    public double getAvaliacaoMediaComodatario() {
+        return avaliacao.getMediaAvaliacaoComodatario();
+    }
+
     public void ativar() {
         this.status = StatusUsuario.ATIVO;
     }
@@ -113,6 +134,15 @@ public class Usuario extends Entidade<UUID> {
         this.status = StatusUsuario.BLOQUEADO;
     }
 
+    /**
+     * Cria um objeto Usuario com id, data de cadastro e status automáticos.
+     *
+     * @param nome           nome
+     * @param email          email
+     * @param telefone       telefone
+     * @param dataNascimento data de nascimento
+     * @return o objeto Usuario
+     */
     public static Usuario create(
             String nome,
             String email,
@@ -125,22 +155,22 @@ public class Usuario extends Entidade<UUID> {
                 email,
                 telefone,
                 dataNascimento,
+                AvaliacaoMediaUsuario.create(),
                 Instant.now(),
                 StatusUsuario.ATIVO
         );
     }
 
     /**
-     * Reconstrói o objeto.
+     * Reconstrói um objeto Usuario.
      *
-     * @param id id
-     * @param nome nome
-     * @param email email
-     * @param telefone telefone
+     * @param id             id
+     * @param nome           nome
+     * @param email          email
+     * @param telefone       telefone
      * @param dataNascimento data de nascimento
-     * @param dataCadastro data de cadastro
-     * @param status status
-     *
+     * @param dataCadastro   data de cadastro
+     * @param status         status
      * @return o objeto Usuario
      */
     public static Usuario reconstitute(
@@ -149,6 +179,7 @@ public class Usuario extends Entidade<UUID> {
             String email,
             String telefone,
             LocalDate dataNascimento,
+            AvaliacaoMediaUsuario avaliacao,
             Instant dataCadastro,
             StatusUsuario status
     ) {
@@ -158,6 +189,7 @@ public class Usuario extends Entidade<UUID> {
                 email,
                 telefone,
                 dataNascimento,
+                avaliacao,
                 dataCadastro,
                 status
         );

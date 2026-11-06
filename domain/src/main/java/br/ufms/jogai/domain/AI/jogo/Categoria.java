@@ -13,10 +13,18 @@ public final class Categoria extends Entidade<CategoriaId> {
     private final String nome;
     private final String descricao;
 
-    public Categoria(CategoriaId id, String nome, String descricao) {
+    private Categoria(CategoriaId id, String nome, String descricao) {
         super(id);
         this.nome = Texto.obrigatorio(nome, "nome");
         this.descricao = Texto.opcional(descricao).orElse(null);
+    }
+
+    public static Categoria create(String nome, String descricao) {
+        return new Categoria(CategoriaId.novo(), nome, descricao);
+    }
+
+    public static Categoria reconstitute(CategoriaId id, String nome, String descricao) {
+        return new Categoria(id, nome, descricao);
     }
 
     public String nome() {

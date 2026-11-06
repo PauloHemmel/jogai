@@ -1,4 +1,4 @@
-package br.ufms.jogai.data.model;
+package br.ufms.jogai.data.model.shared;
 
 import br.ufms.jogai.domain.shared.Entidade;
 import com.google.cloud.Timestamp;

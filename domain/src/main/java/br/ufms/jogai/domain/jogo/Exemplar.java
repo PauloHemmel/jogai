@@ -17,6 +17,15 @@ public class Exemplar extends Entidade<UUID> {
     private String observacao;
     private final Instant dataCadastro;
 
+    public Exemplar(
+            JogoInfo jogoInfo,
+            UsuarioInfo proprietarioInfo,
+            EstadoConservacao estadoConservacao,
+            String observacao
+    ) {
+        this(UUID.randomUUID(), jogoInfo, proprietarioInfo, estadoConservacao, observacao, Instant.now());
+    }
+
     private Exemplar(
             UUID id,
             JogoInfo jogoInfo,
@@ -25,20 +34,20 @@ public class Exemplar extends Entidade<UUID> {
             String observacao,
             Instant dataCadastro
     ) {
-        super(id);
+        super(Validar.uuid(id));
 
         this.jogo = Objects.requireNonNull(
                 jogoInfo, "As informações do jogo não podem ser nulas");
         this.proprietario = Objects.requireNonNull(
                 proprietarioInfo, "As informações do proprietário do jogo não podem ser nulas");
-        Validar.notNull(jogoInfo.id(), "O id do jogo não pode ser nulo");
+        Validar.uuid(jogoInfo.id());
         Validar.nomeJogo(jogoInfo.nome());
         Validar.nomeEditora(jogoInfo.editora());
         Validar.categoriasJogo(jogoInfo.categorias());
-        Validar.notNull(proprietarioInfo.id(), "O id do proprietário não pode ser nulo");
+        Validar.uuid(proprietarioInfo.id());
         Validar.nomePessoa(proprietarioInfo.nome(), true);
         Validar.notNull(proprietarioInfo.email(), "O email do proprietário não pode ser nulo");
-        Usuario.normalizarEmail(proprietarioInfo.email());
+        Validar.email(proprietarioInfo.email());
         Validar.telefone(proprietarioInfo.telefone());
         Validar.dataNascimento(proprietarioInfo.dataNascimento());
         this.dataCadastro = Validar.dataCadastro(dataCadastro);

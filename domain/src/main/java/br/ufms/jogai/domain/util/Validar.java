@@ -7,10 +7,35 @@ import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.Set;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.Locale;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class Validar {
+
+    /**
+     * Valida que um identificador UUID já convertido não seja nulo.
+     *
+     * @param id valor do ID
+     * @return o ID validado
+     */
+    public static UUID uuid(UUID id) {
+        return Objects.requireNonNull(id, "O UUID não pode ser nulo");
+    }
+
+    /**
+     * Analisa e valida um UUID textual, retornando a sua representação tipada.
+     *
+     * @param id valor do ID
+     * @return o ID validado
+     */
+    public static UUID uuid(String id) {
+        return UUID.fromString(
+                new ValidadorString("id", id, true)
+                        .validarNulo()
+                        .getValor()
+        );
+    }
 
     public static <T> T notNull(T object, String mensagem) {
         if (object == null) {
@@ -117,7 +142,7 @@ public class Validar {
                 .getValor(ValidadorString::removerEspacosAdicionais);
     }
 
-    public static String chaveCategoria(String chave) {
+    public static String tagCategoriaJogo(String chave) {
         Objects.requireNonNull(chave, "O id não pode ser nulo");
         return nomeCatalogo(chave, "Chave da categoria", 1, Integer.MAX_VALUE);
     }
@@ -264,7 +289,7 @@ public class Validar {
                 .validarNulo()
                 .validarTamanho(3, 50)
                 .validarPorExpressao(regex)
-                .getValor();
+                .getValor(valor -> valor.toLowerCase(Locale.ROOT));
     }
 
     /**

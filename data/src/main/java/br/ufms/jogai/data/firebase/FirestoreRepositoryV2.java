@@ -1,9 +1,9 @@
 package br.ufms.jogai.data.firebase;
 
-import br.ufms.jogai.data.model.EntityDocument;
-import br.ufms.jogai.data.model.EntityDocumentMapper;
+import br.ufms.jogai.data.model.shared.EntityDocument;
+import br.ufms.jogai.data.model.shared.EntityDocumentMapper;
 import br.ufms.jogai.domain.shared.Entidade;
-import br.ufms.jogai.data.model.Unique;
+import br.ufms.jogai.data.model.shared.Unique;
 import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.shared.Repository;
 import com.google.api.core.ApiFuture;
@@ -14,11 +14,8 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;

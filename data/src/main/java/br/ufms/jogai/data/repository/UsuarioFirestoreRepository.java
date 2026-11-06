@@ -2,11 +2,8 @@ package br.ufms.jogai.data.repository;
 
 import br.ufms.jogai.data.firebase.FirestoreRepository;
 import br.ufms.jogai.data.firebase.config.FirebaseConfig;
-import br.ufms.jogai.domain.usuario.StatusUsuario;
+import br.ufms.jogai.domain.usuario.*;
 import br.ufms.jogai.domain.shared.Page;
-import br.ufms.jogai.domain.usuario.Usuario;
-import br.ufms.jogai.domain.usuario.UsuarioRepository;
-import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.Timestamp;
@@ -44,6 +41,14 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
                 "email", entity.getEmail(),
                 "telefone", entity.getTelefone(),
                 "nascimento", toTimestamp(entity.getDataNascimento()),
+                "avaliacaoComodante", Map.of(
+                        "quantidade", entity.getQtdAvaliacoesComodante(),
+                        "media", entity.getAvaliacaoMediaComodante()
+                ),
+                "avaliacaoComodatario", Map.of(
+                        "quantidade", entity.getQtdAvaliacoesComodatario(),
+                        "media", entity.getAvaliacaoMediaComodatario()
+                ),
                 "cadastradoEm", toTimestamp(entity.getDataCadastro()),
                 "status", entity.getStatus().name()
         );
@@ -51,15 +56,40 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
 
     @Override
     protected Usuario mapToEntity(String id, Map<String, Object> dados) {
+        var avaliacaoComodante = obterMapa(dados, "avaliacaoComodante");
+        var avaliacaoComodatario = obterMapa(dados, "avaliacaoComodatario");
+
+        var avaliacaoMedia = AvaliacaoMediaUsuario.reconstitute(
+                obterNumero(avaliacaoComodante, "quantidade").longValue(),
+                obterNumero(avaliacaoComodante, "media").doubleValue(),
+                obterNumero(avaliacaoComodatario, "quantidade").longValue(),
+                obterNumero(avaliacaoComodatario, "media").doubleValue()
+        );
+
         return Usuario.reconstitute(
                 idToUUID(id),
                 (String) dados.get("nome"),
                 (String) dados.get("email"),
                 (String) dados.get("telefone"),
                 toLocalDate((Timestamp) dados.get("nascimento")),
+                avaliacaoMedia,
                 toInstant((Timestamp) dados.get("cadastradoEm")),
                 StatusUsuario.valueOf((String) dados.get("status"))
         );
+    }
+
+    private static Map<?, ?> obterMapa(Map<String, Object> dados, String campo) {
+        if (dados.get(campo) instanceof Map<?, ?> mapa) {
+            return mapa;
+        }
+        throw new IllegalStateException("Campo '%s' ausente ou inválido no documento.".formatted(campo));
+    }
+
+    private static Number obterNumero(Map<?, ?> dados, String campo) {
+        if (dados.get(campo) instanceof Number numero) {
+            return numero;
+        }
+        throw new IllegalStateException("Campo numérico '%s' ausente ou inválido.".formatted(campo));
     }
 
     @Override
@@ -76,7 +106,7 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
     public CompletableFuture<Optional<Usuario>> buscarPorEmail(String email) {
         Objects.requireNonNull(email);
 
-        return queryOne(collection.whereEqualTo("email", Usuario.normalizarEmail(email)));
+        return queryOne(collection.whereEqualTo("email", Validar.email(email)));
     }
 
     @Override

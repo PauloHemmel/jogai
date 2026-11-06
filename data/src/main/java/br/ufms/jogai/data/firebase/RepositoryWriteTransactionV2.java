@@ -1,5 +1,6 @@
 package br.ufms.jogai.data.firebase;
 
+import br.ufms.jogai.data.model.shared.EntityDocument;
 import br.ufms.jogai.domain.shared.Entidade;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -65,7 +66,7 @@ public final class RepositoryWriteTransactionV2 {
      * @param <ID>       identifier type
      * @return independent captured entity, also suitable for the plan's result
      */
-    public <E extends Entidade<ID>, ID extends Serializable, D extends br.ufms.jogai.data.model.EntityDocument<E>> E create(FirestoreRepositoryV2<E, ID, D> repository, E entity) {
+    public <E extends Entidade<ID>, ID extends Serializable, D extends EntityDocument<E>> E create(FirestoreRepositoryV2<E, ID, D> repository, E entity) {
         checkOpen();
         return addCaptured(repository, repository.capture(entity), true);
     }
@@ -79,7 +80,7 @@ public final class RepositoryWriteTransactionV2 {
      * @param <ID>       identifier type
      * @return independent captured entity
      */
-    public <E extends Entidade<ID>, ID extends Serializable, D extends br.ufms.jogai.data.model.EntityDocument<E>> E save(FirestoreRepositoryV2<E, ID, D> repository, E entity) {
+    public <E extends Entidade<ID>, ID extends Serializable, D extends EntityDocument<E>> E save(FirestoreRepositoryV2<E, ID, D> repository, E entity) {
         checkOpen();
         return addCaptured(repository, repository.capture(entity), false);
     }
@@ -98,7 +99,7 @@ public final class RepositoryWriteTransactionV2 {
      * @param <E>        entity type
      * @param <ID>       identifier type
      */
-    public <E extends Entidade<ID>, ID extends Serializable, D extends br.ufms.jogai.data.model.EntityDocument<E>> void delete(FirestoreRepositoryV2<E, ID, D> repository, ID id) {
+    public <E extends Entidade<ID>, ID extends Serializable, D extends EntityDocument<E>> void delete(FirestoreRepositoryV2<E, ID, D> repository, ID id) {
         checkOpen();
         add(new Mutation(repository, repository.documentReference(id), Kind.DELETE, Map.of(), Map.of()));
     }

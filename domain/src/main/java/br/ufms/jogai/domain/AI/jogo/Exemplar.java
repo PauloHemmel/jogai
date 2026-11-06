@@ -23,7 +23,7 @@ public final class Exemplar extends Entidade<ExemplarId> {
     private final ReservaId reservaId;
     private final String observacoes;
 
-    public Exemplar(ExemplarId id, String codigo, JogoId jogoId, Instant dataCadastro,
+    private Exemplar(ExemplarId id, String codigo, JogoId jogoId, Instant dataCadastro,
                     EstadoConservacao estadoConservacao, StatusExemplar status,
                     ReservaId reservaId, String observacoes) {
         super(id);
@@ -37,6 +37,18 @@ public final class Exemplar extends Entidade<ExemplarId> {
         }
         this.reservaId = reservaId;
         this.observacoes = Texto.opcional(observacoes).orElse(null);
+    }
+
+    public static Exemplar create(String codigo, JogoId jogoId, EstadoConservacao estadoConservacao,
+                                  String observacoes) {
+        return new Exemplar(ExemplarId.novo(), codigo, jogoId, Instant.now(), estadoConservacao,
+                StatusExemplar.DISPONIVEL, null, observacoes);
+    }
+
+    public static Exemplar reconstitute(ExemplarId id, String codigo, JogoId jogoId, Instant dataCadastro,
+                                        EstadoConservacao estadoConservacao, StatusExemplar status,
+                                        ReservaId reservaId, String observacoes) {
+        return new Exemplar(id, codigo, jogoId, dataCadastro, estadoConservacao, status, reservaId, observacoes);
     }
 
     public String codigo() {

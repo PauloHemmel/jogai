@@ -15,10 +15,18 @@ public final class ItemEmprestimo extends Entidade<ItemEmprestimoId> {
     private final ExemplarId exemplarId;
     private final Instant dataDevolucao;
 
-    public ItemEmprestimo(ItemEmprestimoId id, ExemplarId exemplarId, Instant dataDevolucao) {
+    ItemEmprestimo(ItemEmprestimoId id, ExemplarId exemplarId, Instant dataDevolucao) {
         super(id);
         this.exemplarId = Objects.requireNonNull(exemplarId, "exemplarId não pode ser nulo");
         this.dataDevolucao = dataDevolucao;
+    }
+
+    public static ItemEmprestimo create(ExemplarId exemplarId) {
+        return new ItemEmprestimo(ItemEmprestimoId.novo(), exemplarId, null);
+    }
+
+    public static ItemEmprestimo reconstitute(ItemEmprestimoId id, ExemplarId exemplarId, Instant dataDevolucao) {
+        return new ItemEmprestimo(id, exemplarId, dataDevolucao);
     }
 
     public ExemplarId exemplarId() {

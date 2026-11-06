@@ -30,7 +30,7 @@ public final class Reserva extends Entidade<ReservaId> {
     private final ExemplarId exemplarAtendidoId;
     private final String observacoes;
 
-    public Reserva(ReservaId id, UsuarioId usuarioId, JogoId jogoId, Instant dataReserva,
+    private Reserva(ReservaId id, UsuarioId usuarioId, JogoId jogoId, Instant dataReserva,
                    StatusReserva status, Instant dataAtendimento, Instant dataCancelamento,
                    ExemplarId exemplarAtendidoId, String observacoes) {
         super(id);
@@ -58,6 +58,13 @@ public final class Reserva extends Entidade<ReservaId> {
         this.dataCancelamento = dataCancelamento;
         this.exemplarAtendidoId = exemplarAtendidoId;
         this.observacoes = Texto.opcional(observacoes).orElse(null);
+    }
+
+    public static Reserva reconstitute(ReservaId id, UsuarioId usuarioId, JogoId jogoId, Instant dataReserva,
+                                       StatusReserva status, Instant dataAtendimento, Instant dataCancelamento,
+                                       ExemplarId exemplarAtendidoId, String observacoes) {
+        return new Reserva(id, usuarioId, jogoId, dataReserva, status, dataAtendimento,
+                dataCancelamento, exemplarAtendidoId, observacoes);
     }
 
     public static Reserva criar(ReservaId id, Usuario usuario, Jogo jogo, Instant instante,

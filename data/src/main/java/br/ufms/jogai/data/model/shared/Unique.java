@@ -1,4 +1,4 @@
-package br.ufms.jogai.data.model;
+package br.ufms.jogai.data.model.shared;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

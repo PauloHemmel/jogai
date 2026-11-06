@@ -1,8 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="presentation-wasm-js-1.0.0">
     <output-path>$PROJECT_DIR$/presentation/build/libs</output-path>
-    <root id="archive" name="presentation-wasm-js-1.0.0.jar">
-      <element id="module-output" name="jogai.presentation.wasmJsMain" />
-    </root>
+    <root id="archive" name="presentation-wasm-js-1.0.0.jar" />
   </artifact>
 </component>

@@ -24,7 +24,7 @@ public class ValidadorString extends Validador<String, ValidadorString> {
      * Cria um objeto ValidadorString.
      * Esta classe possui métodos comumente utilzados para implementar validações.
      * Por padrão, o valor de entrada tem os espaços em branco retirados do início e final
-     * da string por meio da função trim(). Para manter os espaços em branco use:
+     * da ‘string’ por meio da função strip(). Para manter os espaços em branco use:
      * ValidadorString(campo, valor, null)
      *
      * @param campo       nome do campo
@@ -32,11 +32,8 @@ public class ValidadorString extends Validador<String, ValidadorString> {
      * @param obrigatorio verdadeiro quando o campo é obrigatório
      */
     ValidadorString(String campo, String valor, boolean obrigatorio) {
-        this(campo, valor, obrigatorio, v -> Optional.ofNullable(v).map(String::trim).orElse(null));
+        this(campo, valor, obrigatorio, v -> Optional.ofNullable(v).map(String::strip).orElse(null));
     }
-
-//    // Assim com o Optional não fica melhor???
-//    ValidadorString(String campo, String valor, Function<Optional<String>, String> converterEntrada);
 
     ValidadorString(String campo, String valor, Function<String, String> converterEntrada) {
         this(campo, valor, true, converterEntrada);
@@ -46,7 +43,7 @@ public class ValidadorString extends Validador<String, ValidadorString> {
      * Cria um objeto ValidadorString.
      * Esta classe possui métodos comumente utilzados para implementar validações.
      * Por padrão, o valor de entrada tem os espaços em branco retirados do início e final
-     * da string por meio da função trim(). Para manter os espaços em branco use:
+     * da string por meio da função strip(). Para manter os espaços em branco use:
      * ValidadorString(campo, valor, null)
      *
      * @param campo            nome do campo
@@ -90,7 +87,7 @@ public class ValidadorString extends Validador<String, ValidadorString> {
 
     public ValidadorString validarPorExpressao(String regex, String msgErro) {
         if ((obrigatorio || !getValor().isEmpty()) && regex != null && !getValor().matches(regex)) {
-            msgErro = msgErro != null ? "\n" + msgErro.trim() : "";
+            msgErro = msgErro != null ? "\n" + msgErro.strip() : "";
             throw new IllegalArgumentException(String.format("%s inválido: [%s]%s", campo, valor, msgErro));
         }
         return this;

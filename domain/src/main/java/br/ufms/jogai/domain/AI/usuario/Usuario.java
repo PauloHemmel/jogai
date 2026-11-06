@@ -18,7 +18,7 @@ public final class Usuario extends Entidade<UsuarioId> {
     private final Instant dataCadastro;
     private final StatusUsuario status;
 
-    public Usuario(UsuarioId id, String nome, Email email, String telefone,
+    private Usuario(UsuarioId id, String nome, Email email, String telefone,
                    Instant dataCadastro, StatusUsuario status) {
         super(id);
         this.nome = Texto.obrigatorio(nome, "nome");
@@ -26,6 +26,15 @@ public final class Usuario extends Entidade<UsuarioId> {
         this.telefone = Texto.opcional(telefone).orElse(null);
         this.dataCadastro = Objects.requireNonNull(dataCadastro, "dataCadastro não pode ser nula");
         this.status = Objects.requireNonNull(status, "status não pode ser nulo");
+    }
+
+    public static Usuario create(String nome, Email email, String telefone) {
+        return new Usuario(UsuarioId.novo(), nome, email, telefone, Instant.now(), StatusUsuario.ATIVO);
+    }
+
+    public static Usuario reconstitute(UsuarioId id, String nome, Email email, String telefone,
+                                       Instant dataCadastro, StatusUsuario status) {
+        return new Usuario(id, nome, email, telefone, dataCadastro, status);
     }
 
     public static Usuario cadastrar(UsuarioId id, String nome, Email email, String telefone, Instant instante) {

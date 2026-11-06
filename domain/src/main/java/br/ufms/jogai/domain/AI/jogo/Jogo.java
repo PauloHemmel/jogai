@@ -26,7 +26,7 @@ public final class Jogo extends Entidade<JogoId> {
     private final boolean ativo;
     private final Set<CategoriaId> categorias;
 
-    public Jogo(JogoId id, String nome, String descricao, int numeroMinimoJogadores,
+    private Jogo(JogoId id, String nome, String descricao, int numeroMinimoJogadores,
                 int numeroMaximoJogadores, int idadeMinima, int duracaoMinima, int duracaoMaxima,
                 Integer anoLancamento, String editora, Instant dataCadastro, boolean ativo,
                 Set<CategoriaId> categorias) {
@@ -56,6 +56,24 @@ public final class Jogo extends Entidade<JogoId> {
             throw new IllegalArgumentException("o jogo deve possuir categorias válidas");
         }
         this.categorias = Set.copyOf(categorias);
+    }
+
+    public static Jogo create(String nome, String descricao, int numeroMinimoJogadores,
+                              int numeroMaximoJogadores, int idadeMinima, int duracaoMinima,
+                              int duracaoMaxima, Integer anoLancamento, String editora,
+                              Set<CategoriaId> categorias) {
+        return new Jogo(JogoId.novo(), nome, descricao, numeroMinimoJogadores, numeroMaximoJogadores,
+                idadeMinima, duracaoMinima, duracaoMaxima, anoLancamento, editora,
+                Instant.now(), true, categorias);
+    }
+
+    public static Jogo reconstitute(JogoId id, String nome, String descricao, int numeroMinimoJogadores,
+                                    int numeroMaximoJogadores, int idadeMinima, int duracaoMinima,
+                                    int duracaoMaxima, Integer anoLancamento, String editora,
+                                    Instant dataCadastro, boolean ativo, Set<CategoriaId> categorias) {
+        return new Jogo(id, nome, descricao, numeroMinimoJogadores, numeroMaximoJogadores,
+                idadeMinima, duracaoMinima, duracaoMaxima, anoLancamento, editora,
+                dataCadastro, ativo, categorias);
     }
 
     public String nome() {

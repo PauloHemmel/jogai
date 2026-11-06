@@ -33,7 +33,9 @@ public class UsuarioFirestoreRepositoryV2 extends FirestoreRepositoryV2<Usuario,
         super(collection, UsuarioDocument.class, UsuarioDocument::new);
     }
 
-    /** Cadastra todos os usuários atomicamente, incluindo reservas de email e telefone. */
+    /**
+     * Cadastra todos os usuários atomicamente, incluindo reservas de email e telefone.
+     */
     public CompletableFuture<Collection<Usuario>> cadastrarTodos(Collection<Usuario> usuarios) {
         Objects.requireNonNull(usuarios, "Users must not be null");
         return writeTransaction(writes -> usuarios.stream()
@@ -60,7 +62,7 @@ public class UsuarioFirestoreRepositoryV2 extends FirestoreRepositoryV2<Usuario,
     public CompletableFuture<Optional<Usuario>> buscarPorEmail(String email) {
         Objects.requireNonNull(email);
 
-        return queryOne(collection.whereEqualTo("email", Usuario.normalizarEmail(email)));
+        return queryOne(collection.whereEqualTo("email", Validar.email(email)));
     }
 
     @Override

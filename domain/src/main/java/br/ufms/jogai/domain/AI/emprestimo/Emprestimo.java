@@ -36,7 +36,7 @@ public final class Emprestimo extends Entidade<EmprestimoId> {
     private final String observacoes;
     private final List<ItemEmprestimo> itens;
 
-    public Emprestimo(EmprestimoId id, UsuarioId usuarioId,
+    private Emprestimo(EmprestimoId id, UsuarioId usuarioId,
                       Instant dataEmprestimo, Instant dataPrevistaDevolucao, Instant dataDevolucao,
                       StatusEmprestimo status, String observacoes, List<ItemEmprestimo> itens) {
         super(id);
@@ -48,7 +48,7 @@ public final class Emprestimo extends Entidade<EmprestimoId> {
             throw new IllegalArgumentException("a devolução prevista deve ser posterior ao empréstimo");
         }
         this.status = Objects.requireNonNull(status, "status não pode ser nulo");
-        if ((status == StatusEmprestimo.FINALIZADO) != (dataDevolucao != null)) {
+        if ((status == StatusEmprestimo.FINALIZADO) == (dataDevolucao == null)) {
             throw new IllegalArgumentException("somente empréstimos finalizados possuem data de devolução");
         }
         if (dataDevolucao != null && dataDevolucao.isBefore(dataEmprestimo)) {
@@ -59,6 +59,14 @@ public final class Emprestimo extends Entidade<EmprestimoId> {
         Objects.requireNonNull(itens, "itens não pode ser nulo");
         this.itens = List.copyOf(itens);
         validarItens();
+    }
+
+    public static Emprestimo reconstitute(EmprestimoId id, UsuarioId usuarioId,
+                                          Instant dataEmprestimo, Instant dataPrevistaDevolucao,
+                                          Instant dataDevolucao, StatusEmprestimo status,
+                                          String observacoes, List<ItemEmprestimo> itens) {
+        return new Emprestimo(id, usuarioId, dataEmprestimo, dataPrevistaDevolucao,
+                dataDevolucao, status, observacoes, itens);
     }
 
     /**

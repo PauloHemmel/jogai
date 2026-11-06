@@ -1,5 +1,8 @@
 package br.ufms.jogai.data.model;
 
+import br.ufms.jogai.data.model.shared.EntityDocument;
+import br.ufms.jogai.data.model.shared.Unique;
+import br.ufms.jogai.domain.usuario.AvaliacaoMediaUsuario;
 import br.ufms.jogai.domain.usuario.StatusUsuario;
 import br.ufms.jogai.domain.usuario.Usuario;
 import com.google.cloud.Timestamp;
@@ -13,9 +16,12 @@ public record UsuarioDocument(
         @Unique String email,
         @Unique String telefone,
         Timestamp nascimento,
+        EstatisticaAvaliacao avaliacaoComodante,
+        EstatisticaAvaliacao avaliacaoComodatario,
         Timestamp cadastradoEm,
         String status
 ) implements EntityDocument<Usuario> {
+
     public UsuarioDocument(Usuario usuario) {
         this(
                 usuario.getId().toString(),
@@ -23,6 +29,8 @@ public record UsuarioDocument(
                 usuario.getEmail(),
                 usuario.getTelefone(),
                 EntityDocument.toTimestamp(usuario.getDataNascimento()),
+                new EstatisticaAvaliacao(usuario.getQtdAvaliacoesComodante(), usuario.getAvaliacaoMediaComodante()),
+                new EstatisticaAvaliacao(usuario.getQtdAvaliacoesComodatario(), usuario.getAvaliacaoMediaComodatario()),
                 EntityDocument.toTimestamp(usuario.getDataCadastro()),
                 usuario.getStatus().name()
         );
@@ -35,31 +43,12 @@ public record UsuarioDocument(
                 email,
                 telefone,
                 EntityDocument.toLocalDate(nascimento),
+                AvaliacaoMediaUsuario.reconstitute(
+                        avaliacaoComodante().quantidade(), avaliacaoComodante.media(),
+                        avaliacaoComodatario().quantidade(), avaliacaoComodatario.media()
+                ),
                 EntityDocument.toInstant(cadastradoEm),
                 StatusUsuario.valueOf(status)
         );
     }
-
-//    public Map<String, Object> toMap() {
-//        return Map.of(
-//                "nome", nome,
-//                "email", email,
-//                "telefone", telefone,
-//                "nascimento", nascimento,
-//                "cadastradoEm", cadastradoEm,
-//                "status", status
-//        );
-//    }
-//
-//    public UsuarioDocument(DocumentSnapshot doc) {
-//        this(
-//                doc.getId(),
-//                doc.getString("nome"),
-//                doc.getString("email"),
-//                doc.getString("telefone"),
-//                doc.getTimestamp("nascimento"),
-//                doc.getTimestamp("cadastradoEm"),
-//                doc.getString("status")
-//        );
-//    }
 }
