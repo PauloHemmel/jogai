@@ -1,5 +1,6 @@
 package br.ufms.jogai.data.repository;
 
+import br.ufms.jogai.data.DefaultCategoriasJogo;
 import br.ufms.jogai.domain.jogo.CategoriaJogo;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
@@ -55,12 +56,12 @@ class CategoriaFirestoreRepositoryTest {
         aguardar(repository.create(categoria("Ação", "Descrição inicial")));
 
         assertThrows(Exception.class, () -> aguardar(repository.create(categoria("Acao", "Outra descrição"))));
-        assertThrows(Exception.class, () -> aguardar(repository.create(CategoriaJogo.reconstitute("outro_id", "Ação", "Outra"))));
+        assertThrows(Exception.class, () -> aguardar(repository.create(categoria("Ação", "Outra"))));
         assertEquals(1, aguardar(repository.getAll()).size());
     }
 
     @Test
-    void saveCriaAtualizaEPermiteTrocarNome() throws Exception {
+    void saveCriaEAtualizaDescricaoMantendoNomeImutavel() throws Exception {
         var categoria = categoria("Aventura", "Descrição antiga");
         aguardar(repository.save(categoria));
         categoria.setDescricao("Descrição nova");
@@ -68,7 +69,9 @@ class CategoriaFirestoreRepositoryTest {
         var salva = aguardar(repository.save(categoria));
 
         assertEquals("Descrição nova", salva.getDescricao());
-        assertEquals("Descrição nova", aguardar(repository.get("aventura")).orElseThrow().getDescricao());
+        var persistida = aguardar(repository.get("aventura")).orElseThrow();
+        assertEquals("Descrição nova", persistida.getDescricao());
+        assertEquals("Aventura", persistida.getNome());
     }
 
     @Test
@@ -103,33 +106,40 @@ class CategoriaFirestoreRepositoryTest {
 
     @Test
     void listarPorNomePaginaResultadosEmOrdemDeTag() throws Exception {
-        db.collection("categoriasJogo").document("rpg_a")
-                .set(java.util.Map.of("nome", "RPG", "descricao", "A")).get();
-        db.collection("categoriasJogo").document("rpg_b")
-                .set(java.util.Map.of("nome", "RPG", "descricao", "B")).get();
-        db.collection("categoriasJogo").document("rpg_c")
-                .set(java.util.Map.of("nome", "RPG", "descricao", "C")).get();
-        aguardar(repository.create(categoria("Corrida", "Não corresponde")));
+        aguardar(repository.create(categoria("RPG", "Interpretação")));
+        aguardar(repository.create(categoria("Corrida", "Velocidade")));
 
-        var primeira = aguardar(repository.listarPorNome("RPG", 2));
-        assertEquals(java.util.List.of("rpg_a", "rpg_b"), primeira.items().stream().map(CategoriaJogo::getTag).toList());
-        assertEquals("rpg_b", primeira.nextCursor().orElseThrow());
-        var segunda = aguardar(repository.listarPorNome("RPG", 2, primeira.nextCursor().orElseThrow()));
-        assertEquals(java.util.List.of("rpg_c"), segunda.items().stream().map(CategoriaJogo::getTag).toList());
-        assertTrue(segunda.nextCursor().isEmpty());
+        var resultado = aguardar(repository.listarPorNome("RPG", 2));
+        assertEquals(java.util.List.of("rpg"), resultado.items().stream().map(CategoriaJogo::getTag).toList());
+        assertTrue(resultado.nextCursor().isEmpty());
     }
 
     @Test
     void getPagePaginaTodosOsDocumentosPorId() throws Exception {
-        aguardar(repository.create(CategoriaJogo.reconstitute("a", "Categoria A", "A")));
-        aguardar(repository.create(CategoriaJogo.reconstitute("b", "Categoria B", "B")));
-        aguardar(repository.create(CategoriaJogo.reconstitute("c", "Categoria C", "C")));
+        aguardar(repository.create(categoria("Categoria A", "A")));
+        aguardar(repository.create(categoria("Categoria B", "B")));
+        aguardar(repository.create(categoria("Categoria C", "C")));
 
         var primeira = aguardar(repository.getPage(2));
-        assertEquals(java.util.List.of("a", "b"), primeira.items().stream().map(CategoriaJogo::getTag).toList());
+        assertEquals(java.util.List.of("categoria_a", "categoria_b"), primeira.items().stream().map(CategoriaJogo::getTag).toList());
         var segunda = aguardar(repository.getPage(2, primeira.nextCursor().orElseThrow()));
-        assertEquals(java.util.List.of("c"), segunda.items().stream().map(CategoriaJogo::getTag).toList());
+        assertEquals(java.util.List.of("categoria_c"), segunda.items().stream().map(CategoriaJogo::getTag).toList());
         assertTrue(segunda.nextCursor().isEmpty());
+    }
+
+    @Test
+    void scriptInsereCategoriasPadraoSemDuplicarQuandoExecutadoNovamente() throws Exception {
+        var script = new DefaultCategoriasJogo(repository);
+
+        script.executar();
+        int quantidadeInicial = aguardar(repository.getAll()).size();
+        assertTrue(quantidadeInicial > 0);
+        assertTrue(aguardar(repository.buscarPorNome("Estratégia")).isPresent());
+        assertTrue(aguardar(repository.buscarPorNome("Cooperativo")).isPresent());
+
+        script.executar();
+
+        assertEquals(quantidadeInicial, aguardar(repository.getAll()).size());
     }
 
     private static CategoriaJogo categoria(String nome, String descricao) {

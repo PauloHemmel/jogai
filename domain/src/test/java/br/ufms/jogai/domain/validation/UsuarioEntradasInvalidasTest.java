@@ -34,7 +34,7 @@ class UsuarioEntradasInvalidasTest {
         var usuario = UsuarioValidationTest.valido();
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario("João Silva", email, usuario.getTelefone(), usuario.getDataNascimento())),
-                () -> assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(usuario.getId(), usuario.getNome(), email, usuario.getTelefone(), usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus())),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(usuario.getId(), usuario.getNome(), email, usuario.getTelefone(), usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus())),
                 () -> assertThrows(IllegalArgumentException.class, () -> usuario.setEmail(email)),
                 () -> assertThrows(IllegalArgumentException.class, () -> Validar.email(email, false)));
         assertEquals("joao@example.com", usuario.getEmail());
@@ -58,7 +58,7 @@ class UsuarioEntradasInvalidasTest {
         var usuario = UsuarioValidationTest.valido();
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(nome, usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento())),
-                () -> assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(usuario.getId(), nome, usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus())),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(usuario.getId(), nome, usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus())),
                 () -> assertThrows(IllegalArgumentException.class, () -> usuario.setNome(nome)));
         assertEquals("João Silva", usuario.getNome());
     }
@@ -80,7 +80,7 @@ class UsuarioEntradasInvalidasTest {
         var usuario = UsuarioValidationTest.valido();
         usuario.setEmail(" " + email + " ");
         assertEquals(email.toLowerCase(Locale.ROOT), usuario.getEmail());
-        var restaurado = Usuario.reconstitute(usuario.getId(), usuario.getNome(), email, usuario.getTelefone(), usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus());
+        var restaurado = UsuarioTestes.reconstituir(usuario.getId(), usuario.getNome(), email, usuario.getTelefone(), usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus());
         assertEquals(usuario.getEmail(), restaurado.getEmail());
     }
 
@@ -93,13 +93,13 @@ class UsuarioEntradasInvalidasTest {
     @MethodSource("nomesValidos")
     void aceitaNomesValidosNaCriacaoEReconstituicao(String nome) {
         var usuario = UsuarioValidationTest.usuario(nome, "a@b.com", "67999991234", LocalDate.of(2000, 2, 29));
-        var restaurado = Usuario.reconstitute(usuario.getId(), nome, usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento(), Instant.now(), usuario.getStatus());
+        var restaurado = UsuarioTestes.reconstituir(usuario.getId(), nome, usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento(), Instant.now(), usuario.getStatus());
         assertEquals(usuario.getNome(), restaurado.getNome());
     }
 
     @Test
     void normalizacaoDeEmailNaoDependeDoLocaleDoSistema() {
         // Exercita o contrato explícito sem alterar o Locale global de outras suítes.
-        assertEquals("i@example.com", Usuario.normalizarEmail("I@EXAMPLE.COM"));
+        assertEquals("i@example.com", Validar.email("I@EXAMPLE.COM"));
     }
 }

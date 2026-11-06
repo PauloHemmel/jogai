@@ -27,7 +27,7 @@ class DatasECatalogoFronteirasTest {
         var anterior = usuario.getDataNascimento();
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(usuario.getNome(), usuario.getEmail(), usuario.getTelefone(), data)),
-                () -> assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.getTelefone(), data, usuario.getDataCadastro(), usuario.getStatus())),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.getTelefone(), data, usuario.getDataCadastro(), usuario.getStatus())),
                 () -> assertThrows(IllegalArgumentException.class, () -> usuario.setDataNascimento(data)));
         assertEquals(anterior, usuario.getDataNascimento());
     }
@@ -55,7 +55,7 @@ class DatasECatalogoFronteirasTest {
     @MethodSource("cadastrosFuturos")
     void reconstituicaoDeUsuarioEExemplarRejeitaCadastroFuturo(Instant data) {
         var usuario = UsuarioValidationTest.valido();
-        assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento(), data, usuario.getStatus()));
+        assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(usuario.getId(), usuario.getNome(), usuario.getEmail(), usuario.getTelefone(), usuario.getDataNascimento(), data, usuario.getStatus()));
         assertThrows(IllegalArgumentException.class, () -> Exemplar.reconstitute(UUID.randomUUID(), new JogoInfo(JogoValidationTest.builder().build()), new UsuarioInfo(usuario), EstadoConservacao.NOVO, null, data));
     }
 

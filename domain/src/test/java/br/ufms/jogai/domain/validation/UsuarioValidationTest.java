@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UsuarioValidationTest {
 
     static Usuario usuario(String nome, String email, String telefone, LocalDate nascimento) {
-        return Usuario.create(nome, email, telefone, nascimento);
+        return Usuario.create(nome, "usuarioteste", email, telefone, nascimento);
     }
 
     static Usuario valido() {
@@ -103,10 +103,10 @@ class UsuarioValidationTest {
         var data = LocalDate.of(1990, 1, 1);
         var agora = Instant.now();
         var id = UUID.randomUUID();
-        assertThrows(NullPointerException.class, () -> Usuario.reconstitute(null, "João Silva", "a@b.com", "67999991234", data, agora, StatusUsuario.ATIVO));
-        assertThrows(NullPointerException.class, () -> Usuario.reconstitute(id, "João Silva", "a@b.com", "67999991234", data, null, StatusUsuario.ATIVO));
-        assertThrows(NullPointerException.class, () -> Usuario.reconstitute(id, "João Silva", "a@b.com", "67999991234", data, agora, null));
-        var u = Usuario.reconstitute(id, "João Silva", "a@b.com", "67999991234", data, agora, StatusUsuario.BLOQUEADO);
+        assertThrows(NullPointerException.class, () -> UsuarioTestes.reconstituir(null, "João Silva", "a@b.com", "67999991234", data, agora, StatusUsuario.ATIVO));
+        assertThrows(NullPointerException.class, () -> UsuarioTestes.reconstituir(id, "João Silva", "a@b.com", "67999991234", data, null, StatusUsuario.ATIVO));
+        assertThrows(NullPointerException.class, () -> UsuarioTestes.reconstituir(id, "João Silva", "a@b.com", "67999991234", data, agora, null));
+        var u = UsuarioTestes.reconstituir(id, "João Silva", "a@b.com", "67999991234", data, agora, StatusUsuario.BLOQUEADO);
         assertEquals(id, u.getId());
         assertEquals(agora, u.getDataCadastro());
         assertEquals(StatusUsuario.BLOQUEADO, u.getStatus());

@@ -47,7 +47,7 @@ class TelefoneCombinacoesTest {
         var usuario = UsuarioValidationTest.valido();
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(usuario.getNome(), usuario.getEmail(), telefone, usuario.getDataNascimento())),
-                () -> assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(usuario.getId(), usuario.getNome(), usuario.getEmail(), telefone, usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus())),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(usuario.getId(), usuario.getNome(), usuario.getEmail(), telefone, usuario.getDataNascimento(), usuario.getDataCadastro(), usuario.getStatus())),
                 () -> assertThrows(IllegalArgumentException.class, () -> usuario.setTelefone(telefone)),
                 () -> assertThrows(IllegalArgumentException.class, () -> Validar.telefone(telefone, false)));
         assertEquals("67999991234", usuario.getTelefone());

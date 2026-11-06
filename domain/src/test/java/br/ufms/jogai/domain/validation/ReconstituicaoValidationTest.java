@@ -22,9 +22,9 @@ class ReconstituicaoValidationTest {
         var cadastro = Instant.parse("2020-01-01T00:00:00Z");
         Class<? extends RuntimeException> erroEmail = texto == null ? NullPointerException.class : IllegalArgumentException.class;
         assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(id, texto, "a@b.com", "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
-                () -> assertThrows(erroEmail, () -> Usuario.reconstitute(id, "João Silva", texto, "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
-                () -> assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(id, "João Silva", "a@b.com", texto, nascimento, cadastro, StatusUsuario.ATIVO)),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(id, texto, "a@b.com", "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
+                () -> assertThrows(erroEmail, () -> UsuarioTestes.reconstituir(id, "João Silva", texto, "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(id, "João Silva", "a@b.com", texto, nascimento, cadastro, StatusUsuario.ATIVO)),
                 () -> assertThrows(IllegalArgumentException.class, () -> Jogo.reconstitute(id, false).nomeEditora(texto, "Devir").numeroJogadores(2, 4).categorias(JogoValidationTest.categoria()).build()),
                 () -> assertThrows(IllegalArgumentException.class, () -> Jogo.reconstitute(id, false).nomeEditora("Catan", texto).numeroJogadores(2, 4).categorias(JogoValidationTest.categoria()).build()),
                 () -> assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.reconstitute("estrategia", texto, null)));
@@ -55,7 +55,7 @@ class ReconstituicaoValidationTest {
     @Test
     void reconstituicaoRejeitaNascimentoFuturoEInvalido() {
         for (var data : new LocalDate[]{LocalDate.now().plusDays(1), LocalDate.now().minusYears(151)}) {
-            assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(UUID.randomUUID(), "João Silva", "a@b.com", "67999991234", data, Instant.now(), StatusUsuario.ATIVO));
+            assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(UUID.randomUUID(), "João Silva", "a@b.com", "67999991234", data, Instant.now(), StatusUsuario.ATIVO));
         }
     }
 }

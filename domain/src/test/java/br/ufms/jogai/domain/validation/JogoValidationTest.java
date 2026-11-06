@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class JogoValidationTest {
 
     static CategoriaJogo categoria() {
-        return CategoriaJogo.create("estrategia", "Estratégia", null);
+        return CategoriaJogo.create("Estratégia", null);
     }
 
     static Jogo.Builder builder() {
@@ -26,14 +26,13 @@ class JogoValidationTest {
     void rejeitaTextosObrigatorios(String texto) {
         assertThrows(IllegalArgumentException.class, () -> builder().nomeEditora(texto, "Devir").build());
         assertThrows(IllegalArgumentException.class, () -> builder().nomeEditora("Catan", texto).build());
-        assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create("chave", texto, null));
+        assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create(texto, null));
         var jogo = builder().build();
         assertThrows(IllegalArgumentException.class, () -> jogo.setNome(texto));
         assertThrows(IllegalArgumentException.class, () -> jogo.setEditora(texto));
         assertEquals("Catan", jogo.getNome());
         assertEquals("Devir", jogo.getEditora());
         var categoria = categoria();
-        assertThrows(IllegalArgumentException.class, () -> categoria.setNome(texto));
         assertEquals("Estratégia", categoria.getNome());
     }
 
@@ -44,10 +43,6 @@ class JogoValidationTest {
         jogo.setEditora("B".repeat(50));
         assertThrows(IllegalArgumentException.class, () -> jogo.setNome("A".repeat(51)));
         assertThrows(IllegalArgumentException.class, () -> jogo.setEditora("B".repeat(51)));
-        var c = CategoriaJogo.create("chave", "AB", null);
-        c.setNome("A".repeat(30));
-        assertThrows(IllegalArgumentException.class, () -> c.setNome("A"));
-        assertThrows(IllegalArgumentException.class, () -> c.setNome("A".repeat(31)));
     }
 
     @Test
@@ -82,7 +77,7 @@ class JogoValidationTest {
         assertThrows(IllegalStateException.class, () -> jogo.removerCategorias(unica, unica));
         assertThrows(UnsupportedOperationException.class, () -> jogo.getCategorias().clear());
         assertEquals(1, jogo.getCategorias().size());
-        var outra = CategoriaJogo.create("familia", "Família", null);
+        var outra = CategoriaJogo.create("Família", null);
         jogo.adicionarCategoria(outra);
         jogo.removerCategoria(unica);
         assertEquals(Set.of(outra), jogo.getCategorias());
@@ -131,7 +126,7 @@ class JogoValidationTest {
         assertNull(jogo.getDescricao());
         jogo.setFaixaEtaria(null);
         assertNotNull(jogo.getFaixaEtaria());
-        var c = CategoriaJogo.create("chave", "  Estratégia  ", "  descrição  ");
+        var c = CategoriaJogo.create("  Estratégia  ", "  descrição  ");
         assertEquals("Estratégia", c.getNome());
         assertEquals("descrição", c.getDescricao());
         c.setDescricao(null);

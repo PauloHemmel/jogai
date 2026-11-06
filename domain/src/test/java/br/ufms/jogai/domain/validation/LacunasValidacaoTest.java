@@ -22,7 +22,7 @@ class LacunasValidacaoTest {
     @ParameterizedTest
     @ValueSource(strings = {"---", "-- --", "João -", "- Silva", "João -- Silva", "João- Silva"})
     void nomeDePessoaExigeLetrasEmCadaParte(String nome) {
-        assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(nome, "a@b.com", "67999991234", LocalDate.of(1990, 1, 1), 0.0, 0.0));
+        assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(nome, "a@b.com", "67999991234", LocalDate.of(1990, 1, 1)));
     }
 
     @ParameterizedTest
@@ -44,13 +44,13 @@ class LacunasValidacaoTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> jogo.setNome(texto)),
                 () -> assertThrows(IllegalArgumentException.class, () -> jogo.setEditora(texto)),
-                () -> assertThrows(IllegalArgumentException.class, () -> JogoValidationTest.categoria().setNome(texto + texto)));
+                () -> assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create(texto + texto, null)));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "\t", "\u2003", "\u0000"})
-    void chaveDaCategoriaDeveSerUtilizavelComoIdentificador(String chave) {
-        assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create(chave, "Estratégia", null));
+    void nomeDaCategoriaDeveSerValidoParaGeracaoAutomaticaDaTag(String nome) {
+        assertThrows(IllegalArgumentException.class, () -> CategoriaJogo.create(nome, null));
     }
 
     @Test
@@ -62,7 +62,7 @@ class LacunasValidacaoTest {
     void adicaoEmLoteDeCategoriasNaoPodeDeixarAlteracaoParcial() {
         var jogo = JogoValidationTest.builder().build();
         var antes = Set.copyOf(jogo.getCategorias());
-        assertThrows(IllegalArgumentException.class, () -> jogo.adicionarCategorias(CategoriaJogo.create("familia", "Família", null), null));
+        assertThrows(IllegalArgumentException.class, () -> jogo.adicionarCategorias(CategoriaJogo.create("Família", null), null));
         assertEquals(antes, jogo.getCategorias(), "Uma operação rejeitada deve preservar as categorias anteriores");
     }
 
@@ -79,7 +79,7 @@ class LacunasValidacaoTest {
     @Test
     void cadastroDeUsuarioNaoPodeEstarNoFuturo() {
         var u = UsuarioValidationTest.valido();
-        assertThrows(IllegalArgumentException.class, () -> Usuario.reconstitute(u.getId(), u.getNome(), u.getEmail(), u.getTelefone(), u.getDataNascimento(), Instant.now().plus(Duration.ofDays(1)), StatusUsuario.ATIVO));
+        assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(u.getId(), u.getNome(), u.getEmail(), u.getTelefone(), u.getDataNascimento(), Instant.now().plus(Duration.ofDays(1)), StatusUsuario.ATIVO));
     }
 
     @Test
