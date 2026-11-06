@@ -13,9 +13,11 @@ import java.util.concurrent.CompletableFuture;
 public interface UsuarioRepository extends Repository<Usuario, UUID> {
 
     /**
-     * Lista usuários por nome em páginas, continuando após o identificador informado.
+     * Lista a primeira página de usuários que correspondem ao nome.
      */
-    CompletableFuture<Page<Usuario, UUID>> listarPorNome(String nome, int pageSize, UUID afterId);
+    default CompletableFuture<Page<Usuario, UUID>> listarPorNome(String nome) {
+        return listarPorNome(nome, DEFAULT_PAGE_SIZE);
+    }
 
     /**
      * Lista a primeira página de usuários que correspondem ao nome.
@@ -23,6 +25,11 @@ public interface UsuarioRepository extends Repository<Usuario, UUID> {
     default CompletableFuture<Page<Usuario, UUID>> listarPorNome(String nome, int pageSize) {
         return listarPorNome(nome, pageSize, null);
     }
+
+    /**
+     * Lista usuários por nome em páginas, continuando após o identificador informado.
+     */
+    CompletableFuture<Page<Usuario, UUID>> listarPorNome(String nome, int pageSize, UUID afterId);
 
     /**
      * Busca assincronamente um usuário pelo nome de usuário.
@@ -40,9 +47,11 @@ public interface UsuarioRepository extends Repository<Usuario, UUID> {
     CompletableFuture<Optional<Usuario>> buscarPorTelefone(String telefone);
 
     /**
-     * Lista usuários de um estado em páginas, continuando após o identificador informado.
+     * Lista a primeira página de usuários no estado informado.
      */
-    CompletableFuture<Page<Usuario, UUID>> listarPorStatus(StatusUsuario status, int pageSize, UUID afterId);
+    default CompletableFuture<Page<Usuario, UUID>> listarPorStatus(StatusUsuario status) {
+        return listarPorStatus(status, DEFAULT_PAGE_SIZE);
+    }
 
     /**
      * Lista a primeira página de usuários no estado informado.
@@ -50,4 +59,9 @@ public interface UsuarioRepository extends Repository<Usuario, UUID> {
     default CompletableFuture<Page<Usuario, UUID>> listarPorStatus(StatusUsuario status, int pageSize) {
         return listarPorStatus(status, pageSize, null);
     }
+
+    /**
+     * Lista usuários de um estado em páginas, continuando após o identificador informado.
+     */
+    CompletableFuture<Page<Usuario, UUID>> listarPorStatus(StatusUsuario status, int pageSize, UUID afterId);
 }

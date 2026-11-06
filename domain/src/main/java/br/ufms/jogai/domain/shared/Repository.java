@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture;
 
 public interface Repository<E extends Entidade<ID>, ID extends Serializable> {
 
+    int DEFAULT_PAGE_SIZE = 50;
+
     CompletableFuture<E> create(E entity);
 
     CompletableFuture<E> save(E entity);

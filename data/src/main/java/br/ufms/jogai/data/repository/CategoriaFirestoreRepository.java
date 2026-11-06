@@ -1,0 +1,51 @@
+package br.ufms.jogai.data.repository;
+
+import br.ufms.jogai.data.firebase.FirestoreRepository;
+import br.ufms.jogai.data.firebase.config.FirebaseConfig;
+import br.ufms.jogai.domain.jogo.CategoriaJogo;
+import br.ufms.jogai.domain.jogo.CategoriaRepository;
+import br.ufms.jogai.domain.shared.Page;
+import br.ufms.jogai.domain.util.Validar;
+import com.google.cloud.firestore.Firestore;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+public class CategoriaFirestoreRepository extends FirestoreRepository<CategoriaJogo, String>
+        implements CategoriaRepository {
+
+    public CategoriaFirestoreRepository() {
+        this(FirebaseConfig.getFirestore());
+    }
+
+    public CategoriaFirestoreRepository(Firestore firestore) {
+        super(Objects.requireNonNull(firestore).collection("categoriasJogo"), Set.of("nome"));
+    }
+
+    @Override
+    protected Map<String, Object> entityToMap(CategoriaJogo entity) {
+        return Map.of(
+                "nome", entity.getNome(),
+                "descricao", entity.getDescricao()
+        );
+    }
+
+    @Override
+    protected CategoriaJogo mapToEntity(String tag, Map<String, Object> data) {
+        return CategoriaJogo.reconstitute(
+                tag,
+                (String) data.get("nome"),
+                (String) data.get("descricao")
+        );
+    }
+
+    @Override
+    public CompletableFuture<Optional<CategoriaJogo>> buscarPorNome(String nome) {
+        return queryOne(collection.whereEqualTo("nome", nome));
+    }
+
+    @Override
+    public CompletableFuture<Page<CategoriaJogo, String>> listarPorNome(String nome, int pageSize, String afterTag) {
+        return queryPage(collection.whereEqualTo("nome", nome), pageSize, afterTag);
+    }
+}

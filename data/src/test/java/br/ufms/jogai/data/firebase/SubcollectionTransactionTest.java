@@ -79,7 +79,8 @@ class SubcollectionTransactionTest {
     @Test
     void registrationExampleCreatesAndDeletesUserAndNestedCategoryTogether() throws Exception {
         var users = new RegistrationExampleRepository(db);
-        var user = Usuario.create("Pessoa Exemplo", "person@example.com", "67996122809", LocalDate.of(1990, 1, 1));
+        var user = Usuario.create("Pessoa Exemplo", "pessoa_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
+                "person@example.com", "67996122809", LocalDate.of(1990, 1, 1));
         var categories = new CategoriaExemploRepository(db.collection("usuarios").document(user.getId().toString())
                 .collection("categorias"));
         var category = new CategoriaExemplo(UUID.randomUUID(), "Jogos de Tabuleiro", "EST");

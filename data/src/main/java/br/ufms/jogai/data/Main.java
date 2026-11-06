@@ -16,7 +16,7 @@ public class Main {
         executar("Criar usuário", Main::testarCriacao);
         executar("Buscar usuário por ID", Main::testarBuscaPorId);
         executar("Buscar usuário por e-mail", Main::testarBuscaPorEmail);
-//        executar("Excluir usuário", Main::testarExclusao);
+        executar("Excluir usuário", Main::testarExclusao);
     }
 
     private static void testarListagem() throws Exception {
@@ -34,6 +34,7 @@ public class Main {
     private static void testarCriacao() throws Exception {
         var usuario = Usuario.create(
                 "Kleber Kruger",
+                "kleberkruger",
                 EMAIL_TESTE,
                 "67996122809",
                 LocalDate.of(1988, 12, 8)

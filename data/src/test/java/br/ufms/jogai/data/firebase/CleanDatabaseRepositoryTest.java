@@ -117,7 +117,8 @@ class CleanDatabaseRepositoryTest {
     }
 
     private static Usuario user(String label, String phone) {
-        return Usuario.create("Pessoa Exemplo", label + "@example.com", phone, LocalDate.of(1990, 1, 1));
+        return Usuario.create("Pessoa Exemplo", "pessoa_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
+                label + "@example.com", phone, LocalDate.of(1990, 1, 1));
     }
 
     private static <T> T await(CompletableFuture<T> result) throws Exception {

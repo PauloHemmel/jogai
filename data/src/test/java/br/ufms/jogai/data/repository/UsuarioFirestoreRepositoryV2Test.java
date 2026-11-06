@@ -85,7 +85,8 @@ class UsuarioFirestoreRepositoryV2Test {
     }
 
     private static Usuario usuario(String email, String telefone) {
-        return Usuario.create("Pessoa V2", email, telefone, LocalDate.of(1990, 1, 1));
+        return Usuario.create("Pessoa V", "pessoa_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
+                email, telefone, LocalDate.of(1990, 1, 1));
     }
 
     private static <T> T await(CompletableFuture<T> future) throws Exception {

@@ -69,6 +69,34 @@ class UsuarioFirestoreRepositoryTest {
     }
 
     @Test
+    void metodosGenericosDoRepositorioEBuscaPorUsuario() throws Exception {
+        Usuario ana = usuario("ana@example.com", "67996122801");
+        Usuario bruno = usuario("bruno@example.com", "67996122802");
+
+        Usuario criada = aguardar(repository.create(ana));
+        assertEquals(ana.getId(), criada.getId());
+        assertEquals(ana.getId(), aguardar(repository.buscarPorUsuario(ana.getUsuario())).orElseThrow().getId());
+        assertTrue(aguardar(repository.buscarPorUsuario("nao-existe")).isEmpty());
+        assertEquals(ana.getId(), aguardar(repository.get(ana.getId())).orElseThrow().getId());
+        assertTrue(aguardar(repository.get(UUID.randomUUID())).isEmpty());
+
+        aguardar(repository.save(bruno));
+        var primeira = aguardar(repository.getPage(1));
+        assertEquals(1, primeira.items().size());
+        assertTrue(primeira.nextCursor().isPresent());
+        var segunda = aguardar(repository.getPage(1, primeira.nextCursor().orElseThrow()));
+        assertEquals(1, segunda.items().size());
+        assertTrue(segunda.nextCursor().isEmpty());
+        assertEquals(2, aguardar(repository.getAll()).size());
+
+        bruno.setNome("Bruno Atualizado");
+        assertEquals("Bruno Atualizado", aguardar(repository.save(bruno)).getNome());
+        aguardar(repository.delete(ana.getId()));
+        assertTrue(aguardar(repository.get(ana.getId())).isEmpty());
+        assertEquals(1, aguardar(repository.getAll()).size());
+    }
+
+    @Test
     void rejeitaEmailDuplicadoSemDiferenciarMaiusculas() throws Exception {
         aguardar(repository.create(usuario("Pessoa@Example.com", "67996122809")));
         duplicado("email", repository.create(usuario("pessoa@example.com", "67996122810")));
@@ -498,7 +526,8 @@ class UsuarioFirestoreRepositoryTest {
     }
 
     private static Usuario usuario(String email, String telefone) {
-        return Usuario.create("Pessoa Exemplo", email, telefone, LocalDate.of(1990, 1, 1));
+        return Usuario.create("Pessoa Exemplo", "pessoa_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
+                email, telefone, LocalDate.of(1990, 1, 1));
     }
 
     private static <T> T aguardar(CompletableFuture<T> future) throws Exception {

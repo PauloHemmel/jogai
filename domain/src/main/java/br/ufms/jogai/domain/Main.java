@@ -14,6 +14,7 @@ public class Main {
 
         Usuario u = Usuario.create(
                 "Kleber Kruger",
+                "kleberkruger",
                 "kleberkruger@gmail.com",
                 "67996122809",
                 LocalDate.of(1988, 12, 8)
@@ -36,8 +37,8 @@ public class Main {
                 .faixaEtaria(3, 6)
                 .duracaoPartida(15, 30)
                 .categorias(
-                        CategoriaJogo.create("estrategia", "Estrategia", ""),
-                        CategoriaJogo.create("acao", "Ação", "")
+                        CategoriaJogo.create("Estrategia", ""),
+                        CategoriaJogo.create("Ação", "")
                 )
                 .create();
 
@@ -47,8 +48,8 @@ public class Main {
                 .faixaEtaria(3, 6)
                 .duracaoPartida(15, 30)
                 .categorias(
-                        CategoriaJogo.create("estrategia", "Estrategia", ""),
-                        CategoriaJogo.create("acao", "Ação", "")
+                        CategoriaJogo.create("Estrategia", ""),
+                        CategoriaJogo.create("Ação", "")
                 )
                 .reconstitute(UUID.randomUUID(), true);
 
@@ -58,8 +59,8 @@ public class Main {
 //                .faixaEtaria(3, 6)
                 .duracaoPartida(15, 30)
                 .categorias(
-                        CategoriaJogo.create("estrategia", "Estrategia", ""),
-                        CategoriaJogo.create("acao", "Ação", "")
+                        CategoriaJogo.create("Estrategia", ""),
+                        CategoriaJogo.create("Ação", "")
                 )
                 .build();
 
@@ -69,8 +70,8 @@ public class Main {
                 .faixaEtaria(3, 6)
                 .duracaoPartida(15, 30)
                 .categorias(
-                        CategoriaJogo.create("estrategia", "Estrategia", ""),
-                        CategoriaJogo.create("acao", "Ação", "")
+                        CategoriaJogo.create("Estrategia", "Jogos de estratégia"),
+                        CategoriaJogo.create("Ação", "Jogos de ação")
                 )
                 .build();
     }

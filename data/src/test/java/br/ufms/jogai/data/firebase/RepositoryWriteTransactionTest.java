@@ -576,7 +576,7 @@ class RepositoryWriteTransactionTest {
         var codes = new HashSet<String>();
         for (var category : await(categories.getPage(100).thenApply(page -> page.items()))) {
             assertTrue(codes.add(category.getCodigo()));
-            expectReservation(expected, "categoria_exemplo", "codigo", category.getCodigo(), category.getId());
+            expectReservation(expected, "categorias_exemplo", "codigo", category.getCodigo(), category.getId());
         }
         Map<String, Map<String, Object>> actual = new HashMap<>();
         for (var reservation : db.collection(COLLECTION_PATH).get().get().getDocuments()) {
@@ -595,12 +595,14 @@ class RepositoryWriteTransactionTest {
     }
 
     private static Usuario user(String label, int phone) {
-        return Usuario.create("Pessoa Exemplo", label + "@example.com", String.format("679%08d", phone), LocalDate.of(1990, 1, 1));
+        return Usuario.create("Pessoa Exemplo", "pessoa_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
+                label + "@example.com", String.format("679%08d", phone), LocalDate.of(1990, 1, 1));
     }
 
     private static Usuario copy(Usuario user) {
-        return Usuario.reconstitute(user.getId(), user.getNome(), user.getEmail(), user.getTelefone(),
-                user.getDataNascimento(), user.getDataCadastro(), user.getStatus());
+        return Usuario.reconstitute(user.getId(), user.getNome(), user.getUsuario(), user.getEmail(), user.getTelefone(),
+                user.getDataNascimento(), br.ufms.jogai.domain.usuario.AvaliacaoMediaUsuario.create(),
+                user.getStatus(), user.getDataCadastro());
     }
 
     private static CategoriaExemplo category(String code) {
