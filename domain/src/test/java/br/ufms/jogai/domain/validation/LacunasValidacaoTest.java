@@ -22,7 +22,7 @@ class LacunasValidacaoTest {
     @ParameterizedTest
     @ValueSource(strings = {"---", "-- --", "João -", "- Silva", "João -- Silva", "João- Silva"})
     void nomeDePessoaExigeLetrasEmCadaParte(String nome) {
-        assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(nome, "a@b.com", "67999991234", LocalDate.of(1990, 1, 1)));
+        assertThrows(IllegalArgumentException.class, () -> UsuarioValidationTest.usuario(nome, "a@b.com", "67999991234", LocalDate.of(1990, 1, 1), 0.0, 0.0));
     }
 
     @ParameterizedTest
@@ -94,7 +94,7 @@ class LacunasValidacaoTest {
 
     @Test
     void exemplarNaoPodeReferenciarProprietarioSemIdentidade() {
-        assertThrows(IllegalArgumentException.class, () -> Exemplar.create(new JogoInfo(JogoValidationTest.builder().build()), new UsuarioInfo(null, "João Silva", "a@b.com", "67999991234", LocalDate.of(1990, 1, 1)), EstadoConservacao.NOVO, null));
+        assertThrows(IllegalArgumentException.class, () -> Exemplar.create(new JogoInfo(JogoValidationTest.builder().build()), new UsuarioInfo(null, "João Silva", "a@b.com", "67999991234", LocalDate.of(1990, 1, 1), 0.0, 0.0), EstadoConservacao.NOVO, null));
     }
 
     @ParameterizedTest
@@ -130,14 +130,14 @@ class LacunasValidacaoTest {
         var id = UUID.randomUUID();
         var nascimento = LocalDate.of(1990, 1, 1);
         return java.util.stream.Stream.of(
-                new UsuarioInfo(id, null, "a@b.com", "67999991234", nascimento),
-                new UsuarioInfo(id, " ", "a@b.com", "67999991234", nascimento),
-                new UsuarioInfo(id, "João Silva", null, "67999991234", nascimento),
-                new UsuarioInfo(id, "João Silva", "invalido", "67999991234", nascimento),
-                new UsuarioInfo(id, "João Silva", "a@b.com", null, nascimento),
-                new UsuarioInfo(id, "João Silva", "a@b.com", "abc", nascimento),
-                new UsuarioInfo(id, "João Silva", "a@b.com", "67999991234", null),
-                new UsuarioInfo(id, "João Silva", "a@b.com", "67999991234", LocalDate.now().plusDays(1)));
+                new UsuarioInfo(id, null, "a@b.com", "67999991234", nascimento, 0.0, 0.0),
+                new UsuarioInfo(id, " ", "a@b.com", "67999991234", nascimento, 0.0, 0.0),
+                new UsuarioInfo(id, "João Silva", null, "67999991234", nascimento, 0.0, 0.0),
+                new UsuarioInfo(id, "João Silva", "invalido", "67999991234", nascimento, 0.0, 0.0),
+                new UsuarioInfo(id, "João Silva", "a@b.com", null, nascimento, 0.0, 0.0),
+                new UsuarioInfo(id, "João Silva", "a@b.com", "abc", nascimento, 0.0, 0.0),
+                new UsuarioInfo(id, "João Silva", "a@b.com", "67999991234", null, 0.0, 0.0),
+                new UsuarioInfo(id, "João Silva", "a@b.com", "67999991234", LocalDate.now().plusDays(1), 0.0, 0.0));
     }
 
     @ParameterizedTest

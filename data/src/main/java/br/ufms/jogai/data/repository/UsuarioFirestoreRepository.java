@@ -42,12 +42,12 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
                 "telefone", entity.getTelefone(),
                 "nascimento", toTimestamp(entity.getDataNascimento()),
                 "avaliacaoComodante", Map.of(
-                        "quantidade", entity.getQtdAvaliacoesComodante(),
-                        "media", entity.getAvaliacaoMediaComodante()
+                        "quantidade", entity.getQuantidadeAvaliacoesComodante(),
+                        "media", entity.getNotaAvaliacaoComodante()
                 ),
                 "avaliacaoComodatario", Map.of(
-                        "quantidade", entity.getQtdAvaliacoesComodatario(),
-                        "media", entity.getAvaliacaoMediaComodatario()
+                        "quantidade", entity.getQuantidadeAvaliacoesComodatario(),
+                        "media", entity.getNotaAvaliacaoComodatario()
                 ),
                 "cadastradoEm", toTimestamp(entity.getDataCadastro()),
                 "status", entity.getStatus().name()

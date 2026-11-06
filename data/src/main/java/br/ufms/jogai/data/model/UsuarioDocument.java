@@ -29,8 +29,8 @@ public record UsuarioDocument(
                 usuario.getEmail(),
                 usuario.getTelefone(),
                 EntityDocument.toTimestamp(usuario.getDataNascimento()),
-                new EstatisticaAvaliacao(usuario.getQtdAvaliacoesComodante(), usuario.getAvaliacaoMediaComodante()),
-                new EstatisticaAvaliacao(usuario.getQtdAvaliacoesComodatario(), usuario.getAvaliacaoMediaComodatario()),
+                new EstatisticaAvaliacao(usuario.getQuantidadeAvaliacoesComodante(), usuario.getNotaAvaliacaoComodante()),
+                new EstatisticaAvaliacao(usuario.getQuantidadeAvaliacoesComodatario(), usuario.getNotaAvaliacaoComodatario()),
                 EntityDocument.toTimestamp(usuario.getDataCadastro()),
                 usuario.getStatus().name()
         );

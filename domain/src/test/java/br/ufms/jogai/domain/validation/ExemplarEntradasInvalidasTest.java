@@ -17,13 +17,13 @@ class ExemplarEntradasInvalidasTest {
         var usuario = UsuarioValidationTest.valido();
         var id = usuario.getId();
         Stream<Arguments> nomes = UsuarioEntradasInvalidasTest.nomesInvalidos()
-                .map(nome -> Arguments.of("nome", new UsuarioInfo(id,nome,usuario.getEmail(),usuario.getTelefone(),usuario.getDataNascimento())));
+                .map(nome -> Arguments.of("nome", new UsuarioInfo(id,nome,usuario.getEmail(),usuario.getTelefone(),usuario.getDataNascimento(),0.0,0.0)));
         Stream<Arguments> emails = UsuarioEntradasInvalidasTest.emailsInvalidos()
-                .map(email -> Arguments.of("email", new UsuarioInfo(id,usuario.getNome(),email,usuario.getTelefone(),usuario.getDataNascimento())));
+                .map(email -> Arguments.of("email", new UsuarioInfo(id,usuario.getNome(),email,usuario.getTelefone(),usuario.getDataNascimento(),0.0,0.0)));
         Stream<Arguments> telefones = Stream.concat(TelefoneCombinacoesTest.telefonesComDddInvalido(), TelefoneCombinacoesTest.telefonesMalformados())
-                .map(telefone -> Arguments.of("telefone", new UsuarioInfo(id,usuario.getNome(),usuario.getEmail(),telefone,usuario.getDataNascimento())));
+                .map(telefone -> Arguments.of("telefone", new UsuarioInfo(id,usuario.getNome(),usuario.getEmail(),telefone,usuario.getDataNascimento(),0.0,0.0)));
         Stream<Arguments> datas = DatasECatalogoFronteirasTest.nascimentosInvalidos()
-                .map(data -> Arguments.of("nascimento", new UsuarioInfo(id,usuario.getNome(),usuario.getEmail(),usuario.getTelefone(),data)));
+                .map(data -> Arguments.of("nascimento", new UsuarioInfo(id,usuario.getNome(),usuario.getEmail(),usuario.getTelefone(),data,0.0,0.0)));
         return Stream.of(nomes,emails,telefones,datas).flatMap(s -> s);
     }
 

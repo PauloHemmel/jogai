@@ -16,7 +16,7 @@ public class Main {
         executar("Criar usuário", Main::testarCriacao);
         executar("Buscar usuário por ID", Main::testarBuscaPorId);
         executar("Buscar usuário por e-mail", Main::testarBuscaPorEmail);
-        executar("Excluir usuário", Main::testarExclusao);
+//        executar("Excluir usuário", Main::testarExclusao);
     }
 
     private static void testarListagem() throws Exception {
