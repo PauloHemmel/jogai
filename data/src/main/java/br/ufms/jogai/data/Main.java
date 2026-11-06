@@ -5,7 +5,9 @@ import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 public class Main {
 
@@ -63,6 +65,17 @@ public class Main {
                         page.nextCursor().ifPresent(cursor -> IO.println("Próximo cursor: " + cursor));
                     })
                     .get();
+
+//            repository.buscarPorEmail("kleberkruger@gmail.com").
+//                    thenAccept(opt -> {
+//                        opt.ifPresent(u -> {
+//                            try {
+//                                repository.delete(u.getId()).get();
+//                            } catch (InterruptedException | ExecutionException e) {
+//                                throw new RuntimeException(e);
+//                            }
+//                        });
+//                    }).get();
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
