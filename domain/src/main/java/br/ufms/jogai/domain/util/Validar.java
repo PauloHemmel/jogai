@@ -99,112 +99,6 @@ public class Validar {
     }
 
     /**
-     * Valida o nome de um jogo
-     *
-     * @param nome nome do jogo
-     * @return nome validado
-     */
-    public static String nomeJogo(String nome) {
-        return nomeCatalogo(nome, "Nome do jogo", 1, 50);
-    }
-
-    /**
-     * Valida o nome de uma editora
-     *
-     * @param nome nome da editora
-     * @return nome validado
-     */
-    public static String nomeEditora(String nome) {
-        return nomeCatalogo(nome, "Nome da editora", 1, 50);
-    }
-
-    /**
-     * Valida o nome de uma categoria de jogo
-     *
-     * @param nome nome da categoria
-     * @return nome da categoria validado
-     */
-    public static String nomeCategoriaJogo(String nome) {
-        return nomeCatalogo(nome, "Nome da categoria", 2, 30);
-    }
-
-    private static String nomeCatalogo(String valor, String campo, int minimo, int maximo) {
-        if (valor != null && valor.codePoints().anyMatch(c -> Character.isISOControl(c)
-                || Character.getType(c) == Character.FORMAT
-                || Character.getType(c) == Character.LINE_SEPARATOR
-                || Character.getType(c) == Character.PARAGRAPH_SEPARATOR)) {
-            throw new IllegalArgumentException(campo + " contém caracteres não permitidos");
-        }
-        if (valor != null && valor.codePoints().allMatch(c -> Character.isWhitespace(c) || Character.isSpaceChar(c))) {
-            throw new IllegalArgumentException(campo + " não pode estar em branco");
-        }
-        return new ValidadorString(campo, valor).validarNulo().validarTamanho(minimo, maximo)
-                .getValor(ValidadorString::removerEspacosAdicionais);
-    }
-
-    public static String tagCategoriaJogo(String chave) {
-        Objects.requireNonNull(chave, "O id não pode ser nulo");
-        return nomeCatalogo(chave, "Chave da categoria", 1, Integer.MAX_VALUE);
-    }
-
-    public static Instant dataCadastro(Instant data) {
-        Objects.requireNonNull(data, "A data de cadastro não pode ser nula");
-        if (data.isAfter(Instant.now())) {
-            throw new IllegalArgumentException("A data de cadastro não pode ser futura");
-        }
-        return data;
-    }
-
-    public static <T> Set<T> categoriasJogo(Set<T> categorias) {
-        if (categorias == null || categorias.isEmpty() || categorias.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("O jogo deve possuir pelo menos uma categoria e nenhuma categoria nula");
-        }
-        return Set.copyOf(categorias);
-    }
-
-    /**
-     * Valida o ano de lançamento do jogo
-     *
-     * @param anoLancamento ano de lançamento como inteiro
-     * @return o ano de lançamento
-     */
-    public static Year anoLancamentoJogo(Integer anoLancamento) {
-        return anoLancamentoJogo(anoLancamento == null ? null : Year.of(anoLancamento));
-    }
-
-    /**
-     * Valida o ano de lançamento do jogo
-     *
-     * @param anoLancamento ano de lançamento como inteiro
-     * @param obrigatorio   verdadeiro quando obrigatório
-     * @return o ano de lançamento
-     */
-    public static Year anoLancamentoJogo(Integer anoLancamento, boolean obrigatorio) {
-        return anoLancamentoJogo(anoLancamento == null ? null : Year.of(anoLancamento), obrigatorio);
-    }
-
-    public static Year anoLancamentoJogo(Year anoLancamento) {
-        return anoLancamentoJogo(anoLancamento, false);
-    }
-
-    public static Year anoLancamentoJogo(Year anoLancamento, boolean obrigatorio) {
-        if (anoLancamento == null) {
-            if (obrigatorio) {
-                throw new IllegalArgumentException("O ano de lançamento é obrigatório");
-            }
-            return null;
-        }
-
-        if (anoLancamento.isAfter(Year.now())) {
-            throw new IllegalArgumentException("O ano de lançamento não pode ser futuro: " + anoLancamento);
-        } else if (anoLancamento.isBefore(Year.of(1))) {
-            throw new IllegalArgumentException("O ano de lançamento deve ser posterior a 1");
-        }
-
-        return anoLancamento;
-    }
-
-    /**
      * Valida a razão social de uma pessoa jurídica.
      *
      * @param razaoSocial razão social
@@ -336,6 +230,94 @@ public class Validar {
     }
 
     /**
+     * Valida o nome de um jogo
+     *
+     * @param nome nome do jogo
+     * @return nome validado
+     */
+    public static String nomeJogo(String nome) {
+        return nomeCatalogo(nome, "Nome do jogo", 1, 50);
+    }
+
+    /**
+     * Valida o nome de uma editora
+     *
+     * @param nome nome da editora
+     * @return nome validado
+     */
+    public static String nomeEditora(String nome) {
+        return nomeCatalogo(nome, "Nome da editora", 1, 50);
+    }
+
+    /**
+     * Valida o nome de uma categoria de jogo
+     *
+     * @param nome nome da categoria
+     * @return nome da categoria validado
+     */
+    public static String nomeCategoriaJogo(String nome) {
+        return nomeCatalogo(nome, "Nome da categoria", 2, 30);
+    }
+
+    private static String nomeCatalogo(String valor, String campo, int minimo, int maximo) {
+        return new ValidadorString(campo, valor, v -> v)
+                .validarCaracteresDeControle()
+                .validarNaoEmBranco()
+                .validarNulo()
+                .validarTamanho(minimo, maximo)
+                .getValor(ValidadorString::removerEspacosAdicionais);
+    }
+
+    public static <T> Set<T> categoriasJogo(Set<T> categorias) {
+        if (categorias == null || categorias.isEmpty() || categorias.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("O jogo deve possuir pelo menos uma categoria e nenhuma categoria nula");
+        }
+        return Set.copyOf(categorias);
+    }
+
+    /**
+     * Valida o ano de lançamento do jogo
+     *
+     * @param anoLancamento ano de lançamento como inteiro
+     * @return o ano de lançamento
+     */
+    public static Year anoLancamentoJogo(Integer anoLancamento) {
+        return anoLancamentoJogo(anoLancamento == null ? null : Year.of(anoLancamento));
+    }
+
+    /**
+     * Valida o ano de lançamento do jogo
+     *
+     * @param anoLancamento ano de lançamento como inteiro
+     * @param obrigatorio   verdadeiro quando obrigatório
+     * @return o ano de lançamento
+     */
+    public static Year anoLancamentoJogo(Integer anoLancamento, boolean obrigatorio) {
+        return anoLancamentoJogo(anoLancamento == null ? null : Year.of(anoLancamento), obrigatorio);
+    }
+
+    public static Year anoLancamentoJogo(Year anoLancamento) {
+        return anoLancamentoJogo(anoLancamento, false);
+    }
+
+    public static Year anoLancamentoJogo(Year anoLancamento, boolean obrigatorio) {
+        if (anoLancamento == null) {
+            if (obrigatorio) {
+                throw new IllegalArgumentException("O ano de lançamento é obrigatório");
+            }
+            return null;
+        }
+
+        if (anoLancamento.isAfter(Year.now())) {
+            throw new IllegalArgumentException("O ano de lançamento não pode ser futuro: " + anoLancamento);
+        } else if (anoLancamento.isBefore(Year.of(1))) {
+            throw new IllegalArgumentException("O ano de lançamento deve ser posterior a 1");
+        }
+
+        return anoLancamento;
+    }
+
+    /**
      * Valida uma data de nascimento.
      *
      * @param dataNascimento data de nascimento
@@ -362,6 +344,14 @@ public class Validar {
         LocalDate hoje = LocalDate.now();
         if (data.isAfter(hoje) || data.isBefore(hoje.minusYears(150))) {
             throw new IllegalArgumentException("Data de nascimento inválida");
+        }
+        return data;
+    }
+
+    public static Instant dataCadastro(Instant data) {
+        Objects.requireNonNull(data, "A data de cadastro não pode ser nula");
+        if (data.isAfter(Instant.now())) {
+            throw new IllegalArgumentException("A data de cadastro não pode ser futura");
         }
         return data;
     }
@@ -469,6 +459,15 @@ public class Validar {
 
         int[] digitos = cnpj.chars().map(Character::getNumericValue).toArray();
 
+        int soma = getSomaCNPJ(cnpj, digitos);
+
+        int digitoVerificador2 = (soma % 11 < 2) ? 0 : 11 - (soma % 11);
+        if (digitos[13] != digitoVerificador2) {
+            throw new IllegalArgumentException("CNPJ inválido");
+        }
+    }
+
+    private static int getSomaCNPJ(String cnpj, int[] digitos) {
         int soma = 0;
         int peso = 2;
         for (int i = 11; i >= 0; i--) {
@@ -489,10 +488,6 @@ public class Validar {
             peso++;
             if (peso == 10) peso = 2;
         }
-
-        int digitoVerificador2 = (soma % 11 < 2) ? 0 : 11 - (soma % 11);
-        if (digitos[13] != digitoVerificador2) {
-            throw new IllegalArgumentException("CNPJ inválido");
-        }
+        return soma;
     }
 }

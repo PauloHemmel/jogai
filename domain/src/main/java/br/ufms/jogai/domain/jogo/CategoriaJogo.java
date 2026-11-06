@@ -3,6 +3,10 @@ package br.ufms.jogai.domain.jogo;
 import br.ufms.jogai.domain.shared.Entidade;
 import br.ufms.jogai.domain.util.Validar;
 
+import java.text.Normalizer;
+import java.util.Locale;
+import java.util.Objects;
+
 
 public class CategoriaJogo extends Entidade<String> {
 
@@ -10,7 +14,7 @@ public class CategoriaJogo extends Entidade<String> {
     private String descricao;
 
     private CategoriaJogo(String tag, String nome, String descricao) {
-        super(Validar.tagCategoriaJogo(tag));
+        super(tag);
 
         setNome(nome);
         setDescricao(descricao);
@@ -20,7 +24,7 @@ public class CategoriaJogo extends Entidade<String> {
         return nome;
     }
 
-    public void setNome(String nome) {
+    private void setNome(String nome) {
         this.nome = Validar.nomeCategoriaJogo(nome);
     }
 
@@ -29,15 +33,26 @@ public class CategoriaJogo extends Entidade<String> {
     }
 
     public void setDescricao(String descricao) {
-        this.descricao = descricao != null ? descricao.trim() : null;
+        this.descricao = descricao != null ? descricao.strip() : null;
     }
 
     public String getTag() {
         return getId();
     }
 
-    public static CategoriaJogo create(String chave, String nome, String descricao) {
-        return new CategoriaJogo(chave, nome, descricao);
+    private static String gerarTag(String nomeCategoria) {
+        Objects.requireNonNull(nomeCategoria,
+                "A tag da categoria não pode ser gerada a partir de um nome nulo");
+
+        return Normalizer.normalize(nomeCategoria, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_|_$", "");
+    }
+
+    public static CategoriaJogo create(String nome, String descricao) {
+        return new CategoriaJogo(gerarTag(nome), nome, descricao);
     }
 
     public static CategoriaJogo reconstitute(String tag, String nome, String descricao) {

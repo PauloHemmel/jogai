@@ -22,7 +22,7 @@ public class ValidadorString extends Validador<String, ValidadorString> {
 
     /**
      * Cria um objeto ValidadorString.
-     * Esta classe possui métodos comumente utilzados para implementar validações.
+     * Esta classe possui métodos comumente utilizados para implementar validações.
      * Por padrão, o valor de entrada tem os espaços em branco retirados do início e final
      * da ‘string’ por meio da função strip(). Para manter os espaços em branco use:
      * ValidadorString(campo, valor, null)
@@ -41,7 +41,7 @@ public class ValidadorString extends Validador<String, ValidadorString> {
 
     /**
      * Cria um objeto ValidadorString.
-     * Esta classe possui métodos comumente utilzados para implementar validações.
+     * Esta classe possui métodos comumente utilizados para implementar validações.
      * Por padrão, o valor de entrada tem os espaços em branco retirados do início e final
      * da string por meio da função strip(). Para manter os espaços em branco use:
      * ValidadorString(campo, valor, null)
@@ -77,6 +77,29 @@ public class ValidadorString extends Validador<String, ValidadorString> {
         if ((obrigatorio || len > 0) && (len < min || len > max)) {
             throw new IllegalArgumentException(String.format("%s deve conter %s caracter%s", campo,
                     min < max ? "entre " + min + " e " + max : max, max > 1 ? "es" : ""));
+        }
+        return this;
+    }
+
+    /**
+     * Rejeita controles, caracteres de formatação e separadores de linha.
+     */
+    public ValidadorString validarCaracteresDeControle() {
+        if (valor != null && valor.codePoints().anyMatch(c -> Character.isISOControl(c)
+                || Character.getType(c) == Character.FORMAT
+                || Character.getType(c) == Character.LINE_SEPARATOR
+                || Character.getType(c) == Character.PARAGRAPH_SEPARATOR)) {
+            throw new IllegalArgumentException(campo + " contém caracteres não permitidos");
+        }
+        return this;
+    }
+
+    /**
+     * Rejeita strings vazias ou compostas somente por espaços Unicode.
+     */
+    public ValidadorString validarNaoEmBranco() {
+        if (valor != null && valor.codePoints().allMatch(c -> Character.isWhitespace(c) || Character.isSpaceChar(c))) {
+            throw new IllegalArgumentException(campo + " não pode estar em branco");
         }
         return this;
     }
