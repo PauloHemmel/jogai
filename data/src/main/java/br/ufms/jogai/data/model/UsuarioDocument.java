@@ -13,26 +13,28 @@ import java.util.UUID;
 public record UsuarioDocument(
         @DocumentId String id,
         String nome,
+        @Unique String usuario,
         @Unique String email,
         @Unique String telefone,
         Timestamp nascimento,
         EstatisticaAvaliacao avaliacaoComodante,
         EstatisticaAvaliacao avaliacaoComodatario,
-        Timestamp cadastradoEm,
-        String status
+        String status,
+        Timestamp cadastradoEm
 ) implements EntityDocument<Usuario> {
 
     public UsuarioDocument(Usuario usuario) {
         this(
                 usuario.getId().toString(),
                 usuario.getNome(),
+                usuario.getUsuario(),
                 usuario.getEmail(),
                 usuario.getTelefone(),
                 EntityDocument.toTimestamp(usuario.getDataNascimento()),
                 new EstatisticaAvaliacao(usuario.getQuantidadeAvaliacoesComodante(), usuario.getNotaAvaliacaoComodante()),
                 new EstatisticaAvaliacao(usuario.getQuantidadeAvaliacoesComodatario(), usuario.getNotaAvaliacaoComodatario()),
-                EntityDocument.toTimestamp(usuario.getDataCadastro()),
-                usuario.getStatus().name()
+                usuario.getStatus().name(),
+                EntityDocument.toTimestamp(usuario.getDataCadastro())
         );
     }
 
@@ -40,6 +42,7 @@ public record UsuarioDocument(
         return Usuario.reconstitute(
                 UUID.fromString(id),
                 nome,
+                usuario,
                 email,
                 telefone,
                 EntityDocument.toLocalDate(nascimento),
@@ -47,8 +50,8 @@ public record UsuarioDocument(
                         avaliacaoComodante().quantidade(), avaliacaoComodante.media(),
                         avaliacaoComodatario().quantidade(), avaliacaoComodatario.media()
                 ),
-                EntityDocument.toInstant(cadastradoEm),
-                StatusUsuario.valueOf(status)
+                StatusUsuario.valueOf(status),
+                EntityDocument.toInstant(cadastradoEm)
         );
     }
 }

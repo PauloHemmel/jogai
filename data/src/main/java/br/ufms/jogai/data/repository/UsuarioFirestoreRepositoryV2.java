@@ -59,6 +59,13 @@ public class UsuarioFirestoreRepositoryV2 extends FirestoreRepositoryV2<Usuario,
     }
 
     @Override
+    public CompletableFuture<Optional<Usuario>> buscarPorUsuario(String usuario) {
+        Objects.requireNonNull(usuario);
+
+        return queryOne(collection.whereEqualTo("usuario", Validar.usuario(usuario)));
+    }
+
+    @Override
     public CompletableFuture<Optional<Usuario>> buscarPorEmail(String email) {
         Objects.requireNonNull(email);
 

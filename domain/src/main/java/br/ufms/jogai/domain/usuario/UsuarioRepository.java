@@ -3,7 +3,6 @@ package br.ufms.jogai.domain.usuario;
 import br.ufms.jogai.domain.shared.Repository;
 import br.ufms.jogai.domain.shared.Page;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +23,11 @@ public interface UsuarioRepository extends Repository<Usuario, UUID> {
     default CompletableFuture<Page<Usuario, UUID>> listarPorNome(String nome, int pageSize) {
         return listarPorNome(nome, pageSize, null);
     }
+
+    /**
+     * Busca assincronamente um usuário pelo nome de usuário.
+     */
+    CompletableFuture<Optional<Usuario>> buscarPorUsuario(String usuario);
 
     /**
      * Busca assincronamente um usuário pelo endereço de e-mail.

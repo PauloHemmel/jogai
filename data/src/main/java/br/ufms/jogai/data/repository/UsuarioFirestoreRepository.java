@@ -38,6 +38,7 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
     protected Map<String, Object> entityToMap(Usuario entity) {
         return Map.of(
                 "nome", entity.getNome(),
+                "usuario", entity.getUsuario(),
                 "email", entity.getEmail(),
                 "telefone", entity.getTelefone(),
                 "nascimento", toTimestamp(entity.getDataNascimento()),
@@ -49,8 +50,9 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
                         "quantidade", entity.getQuantidadeAvaliacoesComodatario(),
                         "media", entity.getNotaAvaliacaoComodatario()
                 ),
-                "cadastradoEm", toTimestamp(entity.getDataCadastro()),
-                "status", entity.getStatus().name()
+                "status", entity.getStatus().name(),
+                "cadastradoEm", toTimestamp(entity.getDataCadastro())
+
         );
     }
 
@@ -69,12 +71,13 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
         return Usuario.reconstitute(
                 idToUUID(id),
                 (String) dados.get("nome"),
+                (String) dados.get("usuario"),
                 (String) dados.get("email"),
                 (String) dados.get("telefone"),
                 toLocalDate((Timestamp) dados.get("nascimento")),
                 avaliacaoMedia,
-                toInstant((Timestamp) dados.get("cadastradoEm")),
-                StatusUsuario.valueOf((String) dados.get("status"))
+                StatusUsuario.valueOf((String) dados.get("status")),
+                toInstant((Timestamp) dados.get("cadastradoEm"))
         );
     }
 
@@ -100,6 +103,13 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
                 .whereGreaterThanOrEqualTo("nome", nome)
                 .whereLessThanOrEqualTo("nome", nome + "\uf8ff")
                 .orderBy("nome"), pageSize, afterId);
+    }
+
+    @Override
+    public CompletableFuture<Optional<Usuario>> buscarPorUsuario(String usuario) {
+        Objects.requireNonNull(usuario);
+
+        return queryOne(collection.whereEqualTo("usuario", Validar.usuario(usuario)));
     }
 
     @Override

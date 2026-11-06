@@ -15,12 +15,13 @@ import java.util.UUID;
 public class Usuario extends Entidade<UUID> {
 
     private String nome;
+    private String usuario;
     private String email;
     private String telefone;
     private LocalDate dataNascimento;
     private final AvaliacaoMediaUsuario avaliacao;
-    private final Instant dataCadastro;
     private StatusUsuario status;
+    private final Instant dataCadastro;
 
     /**
      * Constrói a entidade após validar e atribuir os seus dados.
@@ -28,27 +29,29 @@ public class Usuario extends Entidade<UUID> {
     private Usuario(
             UUID id,
             String nome,
+            String usuario,
             String email,
             String telefone,
             LocalDate dataNascimento,
             AvaliacaoMediaUsuario avaliacao,
-            Instant dataCadastro,
-            StatusUsuario status
+            StatusUsuario status,
+            Instant dataCadastro
     ) {
         super(Validar.uuid(id));
 
         setNome(nome);
+        setUsuario(usuario);
         setEmail(email);
         setTelefone(telefone);
         setDataNascimento(dataNascimento);
 
         this.avaliacao = Objects.requireNonNull(avaliacao, "A avaliação do usuário não pode ser nula");
-        this.dataCadastro = Validar.dataCadastro(dataCadastro);
         this.status = Objects.requireNonNull(status, "O status do usuário não pode ser nulo");
+        this.dataCadastro = Validar.dataCadastro(dataCadastro);
     }
 
     /**
-     * @return nome do usuário
+     * @return nome completo
      */
     public String getNome() {
         return nome;
@@ -56,9 +59,25 @@ public class Usuario extends Entidade<UUID> {
 
     /**
      * Define o nome após validá-lo.
+     *
+     * @param nome nome completo
      */
     public void setNome(String nome) {
         this.nome = Validar.nomePessoa(nome, true);
+    }
+
+    /**
+     * @return nome de usuário
+     */
+    public String getUsuario() {
+        return usuario;
+    }
+
+    /**
+     * Define o usuário após validá-lo.
+     */
+    public void setUsuario(String usuario) {
+        this.usuario = Validar.usuario(usuario);
     }
 
     /**
@@ -70,6 +89,8 @@ public class Usuario extends Entidade<UUID> {
 
     /**
      * Define o e-mail após validá-lo.
+     *
+     * @param email email
      */
     public void setEmail(String email) {
         this.email = Validar.email(email);
@@ -84,6 +105,8 @@ public class Usuario extends Entidade<UUID> {
 
     /**
      * Define o telefone após validá-lo.
+     *
+     * @param telefone telefone
      */
     public void setTelefone(String telefone) {
         this.telefone = Validar.telefone(telefone, true);
@@ -98,6 +121,8 @@ public class Usuario extends Entidade<UUID> {
 
     /**
      * Define a data de nascimento após validá-la.
+     *
+     * @param dataNascimento data de nascimento
      */
     public void setDataNascimento(LocalDate dataNascimento) {
         this.dataNascimento = Validar.dataNascimento(dataNascimento, true);
@@ -148,6 +173,8 @@ public class Usuario extends Entidade<UUID> {
 
     /**
      * Registra uma avaliação recebida pelo usuário como comodante.
+     *
+     * @param nota nota da avaliação
      */
     public void avaliarComoComodante(int nota) {
         avaliacao.avaliarComoComodante(nota);
@@ -169,6 +196,8 @@ public class Usuario extends Entidade<UUID> {
 
     /**
      * Registra uma avaliação recebida pelo usuário como comodatário.
+     *
+     * @param nota nota da avaliação
      */
     public void avaliarComoComodatario(int nota) {
         avaliacao.avaliarComoComodatario(nota);
@@ -213,7 +242,8 @@ public class Usuario extends Entidade<UUID> {
      * Cria um usuário com identificador e data de cadastro gerados automaticamente,
      * estado ativo e avaliações iniciais vazias.
      *
-     * @param nome           nome do usuário
+     * @param nome           nome completo
+     * @param usuario        nome de usuário
      * @param email          endereço de e-mail
      * @param telefone       telefone de contato
      * @param dataNascimento data de nascimento
@@ -221,6 +251,7 @@ public class Usuario extends Entidade<UUID> {
      */
     public static Usuario create(
             String nome,
+            String usuario,
             String email,
             String telefone,
             LocalDate dataNascimento
@@ -228,12 +259,13 @@ public class Usuario extends Entidade<UUID> {
         return new Usuario(
                 UUID.randomUUID(),
                 nome,
+                usuario,
                 email,
                 telefone,
                 dataNascimento,
                 AvaliacaoMediaUsuario.create(),
-                Instant.now(),
-                StatusUsuario.ATIVO
+                StatusUsuario.ATIVO,
+                Instant.now()
         );
     }
 
@@ -242,7 +274,8 @@ public class Usuario extends Entidade<UUID> {
      * de uma fonte de persistência.
      *
      * @param id             identificador do usuário
-     * @param nome           nome do usuário
+     * @param nome           nome completo
+     * @param usuario        nome de usuário
      * @param email          endereço de e-mail
      * @param telefone       telefone de contato
      * @param dataNascimento data de nascimento
@@ -254,22 +287,24 @@ public class Usuario extends Entidade<UUID> {
     public static Usuario reconstitute(
             UUID id,
             String nome,
+            String usuario,
             String email,
             String telefone,
             LocalDate dataNascimento,
             AvaliacaoMediaUsuario avaliacao,
-            Instant dataCadastro,
-            StatusUsuario status
+            StatusUsuario status,
+            Instant dataCadastro
     ) {
         return new Usuario(
                 id,
                 nome,
+                usuario,
                 email,
                 telefone,
                 dataNascimento,
                 avaliacao,
-                dataCadastro,
-                status
+                status,
+                dataCadastro
         );
     }
 }

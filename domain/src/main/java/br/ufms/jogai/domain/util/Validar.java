@@ -3,8 +3,8 @@ package br.ufms.jogai.domain.util;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Year;
+import java.time.temporal.Temporal;
 import java.util.Set;
 import java.util.Objects;
 import java.util.Locale;
@@ -408,86 +408,117 @@ public class Validar {
     }
 
     /**
-     * Valida o ano de lançamento do jogo
+     * Valida o ano de lançamento do jogo informado como inteiro.
      *
-     * @param anoLancamento ano de lançamento como inteiro
-     * @return o ano de lançamento
+     * @param anoLancamento ano de lançamento
+     * @return o ano de lançamento validado, podendo ser nulo
      */
     public static Year anoLancamentoJogo(Integer anoLancamento) {
         return anoLancamentoJogo(anoLancamento == null ? null : Year.of(anoLancamento));
     }
 
     /**
-     * Valida o ano de lançamento do jogo
+     * Valida o ano de lançamento do jogo informado como inteiro.
      *
-     * @param anoLancamento ano de lançamento como inteiro
-     * @param obrigatorio   verdadeiro quando obrigatório
-     * @return o ano de lançamento
+     * @param anoLancamento ano de lançamento
+     * @param obrigatorio   indica se o preenchimento é obrigatório
+     * @return o ano de lançamento validado, podendo ser nulo quando não obrigatório
      */
     public static Year anoLancamentoJogo(Integer anoLancamento, boolean obrigatorio) {
         return anoLancamentoJogo(anoLancamento == null ? null : Year.of(anoLancamento), obrigatorio);
     }
 
+    /**
+     * Valida o ano de lançamento do jogo.
+     *
+     * @param anoLancamento ano de lançamento
+     * @return o ano de lançamento validado, podendo ser nulo
+     */
     public static Year anoLancamentoJogo(Year anoLancamento) {
         return anoLancamentoJogo(anoLancamento, false);
     }
 
+    /**
+     * Valida o ano de lançamento do jogo, considerando como válido qualquer ano
+     * entre 1 e o ano atual, inclusive.
+     *
+     * @param anoLancamento ano de lançamento
+     * @param obrigatorio   indica se o preenchimento é obrigatório
+     * @return o ano de lançamento validado, podendo ser nulo quando não obrigatório
+     * @throws IllegalArgumentException caso o ano seja inválido ou futuro
+     */
     public static Year anoLancamentoJogo(Year anoLancamento, boolean obrigatorio) {
-        if (anoLancamento == null) {
-            if (obrigatorio) {
-                throw new IllegalArgumentException("O ano de lançamento é obrigatório");
-            }
-            return null;
-        }
-
-        if (anoLancamento.isAfter(Year.now())) {
-            throw new IllegalArgumentException("O ano de lançamento não pode ser futuro: " + anoLancamento);
-        } else if (anoLancamento.isBefore(Year.of(1))) {
-            throw new IllegalArgumentException("O ano de lançamento deve ser posterior a 1");
-        }
-
-        return anoLancamento;
+        return estaEntrePeriodo(
+                "Ano de lançamento",
+                Year.of(Year.MIN_VALUE), anoLancamento, Year.now(),
+                obrigatorio
+        );
     }
 
+    /**
+     * Valida a data de cadastro, impedindo datas futuras.
+     *
+     * @param data data de cadastro
+     * @return a data de cadastro validada
+     * @throws NullPointerException     caso a data seja nula
+     * @throws IllegalArgumentException caso a data seja futura
+     */
     public static Instant dataCadastro(Instant data) {
         Objects.requireNonNull(data, "A data de cadastro não pode ser nula");
-        if (data.isAfter(Instant.now())) {
-            throw new IllegalArgumentException("A data de cadastro não pode ser futura");
+        return estaEntrePeriodo("Data de cadastro", Instant.MIN, data, Instant.now());
+    }
+
+    /**
+     * Valida se um valor temporal está num determinado período, considerando os limites
+     * inicial e final como inclusivos.
+     *
+     * @param campo           nome do campo a ser validado
+     * @param temporalInicial limite temporal inicial do período
+     * @param valorTemporal   valor temporal a ser validado
+     * @param temporalFinal   limite temporal final do período
+     * @param <T>             tipo temporal que implementa {@link Temporal} e {@link Comparable}
+     * @return o valor temporal validado
+     * @throws NullPointerException     caso o campo ou algum dos limites temporais seja nulo
+     * @throws IllegalArgumentException caso o valor temporal esteja fora do período
+     */
+    public static <T extends Temporal & Comparable<? super T>> T estaEntrePeriodo(
+            String campo, T temporalInicial, T valorTemporal, T temporalFinal
+    ) {
+        return estaEntrePeriodo(campo, temporalInicial, valorTemporal, temporalFinal, true);
+    }
+
+    /**
+     * Valida se um valor temporal está num determinado período, considerando os limites
+     * inicial e final como inclusivos.
+     *
+     * @param campo           nome do campo a ser validado
+     * @param temporalInicial limite temporal inicial do período
+     * @param valorTemporal   valor temporal a ser validado
+     * @param temporalFinal   limite temporal final do período
+     * @param obrigatorio     indica se o preenchimento do campo é obrigatório
+     * @param <T>             tipo temporal que implementa {@link Temporal} e {@link Comparable}
+     * @return o valor temporal validado, podendo ser nulo quando não obrigatório
+     * @throws NullPointerException     caso o campo ou algum dos limites temporais seja nulo
+     * @throws IllegalArgumentException caso o valor temporal esteja fora do período
+     */
+    public static <T extends Temporal & Comparable<? super T>> T estaEntrePeriodo(
+            String campo, T temporalInicial, T valorTemporal, T temporalFinal, boolean obrigatorio
+    ) {
+        Objects.requireNonNull(campo, "Nome do campo nulo");
+        Objects.requireNonNull(temporalInicial, "Limite temporal inicial nulo");
+        Objects.requireNonNull(temporalFinal, "Limite temporal final nulo");
+
+        if (temporalInicial.compareTo(temporalFinal) > 0) {
+            throw new IllegalArgumentException("Período temporal inválido");
         }
-        return data;
-    }
 
-    /**
-     * Valida se uma data e hora está entre um determinado período
-     *
-     * @param campo           Nome do campo
-     * @param dataHoraInicial data e hora inicial
-     * @param dataHora        data e hora a ser validada
-     * @param dataHoraFinal   data e hora final
-     * @return a data e hora validada
-     */
-    public static LocalDateTime estaEntrePeriodo(String campo, LocalDateTime dataHoraInicial, LocalDateTime dataHora,
-                                                 LocalDateTime dataHoraFinal) {
-        return estaEntrePeriodo(campo, dataHoraInicial, dataHora, dataHoraFinal, true);
-    }
-
-    /**
-     * Valida se uma data e hora está entre um determinado período
-     *
-     * @param campo           Nome do campo
-     * @param dataHoraInicial data e hora inicial
-     * @param dataHora        data e hora a ser validada
-     * @param dataHoraFinal   data e hora final
-     * @param obrigatorio     verdadeiro caso o campo seja obrigatório
-     * @return a data e hora validada
-     */
-    public static LocalDateTime estaEntrePeriodo(String campo, LocalDateTime dataHoraInicial, LocalDateTime dataHora,
-                                                 LocalDateTime dataHoraFinal, boolean obrigatorio) {
-        return new Validador<>(Objects.requireNonNull(campo, "Nome do campo nulo"), dataHora, obrigatorio)
-                .validar((attr, date) -> date.ifPresent(d -> {
-                    if (d.isAfter(dataHoraFinal) || d.isBefore(dataHoraInicial)) {
+        return new Validador<>(campo, valorTemporal, obrigatorio)
+                .validar((attr, valor) -> valor.ifPresent(data -> {
+                    if (data.compareTo(temporalInicial) < 0
+                            || data.compareTo(temporalFinal) > 0) {
                         throw new IllegalArgumentException(attr + " inválida");
                     }
-                })).getValor();
+                }))
+                .getValor();
     }
 }
