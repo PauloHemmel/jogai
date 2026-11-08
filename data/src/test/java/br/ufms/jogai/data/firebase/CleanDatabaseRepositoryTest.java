@@ -4,6 +4,7 @@ import br.ufms.jogai.data.repository.UsuarioFirestoreRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FirestoreOptions;
 import io.grpc.Status;
 import org.junit.jupiter.api.AfterEach;
@@ -108,7 +109,7 @@ class CleanDatabaseRepositoryTest {
         repository.reconstructions.set(0);
         user.setEmail("changed@example.com");
         await(repository.save(user));
-        assertEquals(1, repository.reconstructions.get(), "Only the independent write result is reconstructed");
+        assertEquals(0, repository.reconstructions.get(), "Writes return their input entity without reconstruction");
         repository.reconstructions.set(0);
         await(repository.delete(user.getId()));
         assertEquals(0, repository.reconstructions.get(), "Deletion needs only persisted unique fields");
@@ -133,9 +134,9 @@ class CleanDatabaseRepositoryTest {
         }
 
         @Override
-        protected Usuario mapToEntity(String id, Map<String, Object> data) {
+        protected Usuario documentToEntity(DocumentSnapshot document) {
             reconstructions.incrementAndGet();
-            return super.mapToEntity(id, data);
+            return super.documentToEntity(document);
         }
     }
 }

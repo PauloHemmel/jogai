@@ -3,6 +3,7 @@ package br.ufms.jogai.data.exemplo;
 import br.ufms.jogai.data.firebase.FirestoreRepository;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.Map;
 import java.util.Set;
@@ -33,11 +34,11 @@ public final class CategoriaExemploRepository extends FirestoreRepository<Catego
     }
 
     @Override
-    protected CategoriaExemplo mapToEntity(String id, Map<String, Object> dados) {
+    protected CategoriaExemplo documentToEntity(DocumentSnapshot document) {
         return new CategoriaExemplo(
-                idToUUID(id),
-                (String) dados.get("nome"),
-                (String) dados.get("codigo")
+                idToUUID(document.getId()),
+                document.getString("nome"),
+                document.getString("codigo")
         );
     }
 }

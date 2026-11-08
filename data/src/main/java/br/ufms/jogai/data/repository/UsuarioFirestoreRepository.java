@@ -6,6 +6,7 @@ import br.ufms.jogai.domain.usuario.*;
 import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.Timestamp;
 
 import java.util.*;
@@ -54,27 +55,24 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
     }
 
     @Override
-    protected Usuario mapToEntity(String id, Map<String, Object> dados) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> avaliacaoMap = (Map<String, Object>) dados.get("avaliacao");
-
+    protected Usuario documentToEntity(DocumentSnapshot doc) {
         AvaliacaoMediaUsuario avaliacao = AvaliacaoMediaUsuario.reconstitute(
-                ((Number) avaliacaoMap.get("qtdAvaliacoesComodante")).longValue(),
-                ((Number) avaliacaoMap.get("mediaAvaliacaoComodante")).doubleValue(),
-                ((Number) avaliacaoMap.get("qtdAvaliacoesComodatario")).longValue(),
-                ((Number) avaliacaoMap.get("mediaAvaliacaoComodatario")).doubleValue()
+                doc.getLong("avaliacao.qtdAvaliacoesComodante"),
+                doc.getDouble("avaliacao.mediaAvaliacaoComodante"),
+                doc.getLong("avaliacao.qtdAvaliacoesComodatario"),
+                doc.getDouble("avaliacao.mediaAvaliacaoComodatario")
         );
 
         return Usuario.reconstitute(
-                UUID.fromString(id),
-                (String) dados.get("nome"),
-                (String) dados.get("usuario"),
-                (String) dados.get("email"),
-                (String) dados.get("telefone"),
-                toLocalDate((Timestamp) dados.get("nascimento")),
+                UUID.fromString(doc.getId()),
+                doc.getString("nome"),
+                doc.getString("usuario"),
+                doc.getString("email"),
+                doc.getString("telefone"),
+                toLocalDate(doc.getTimestamp("nascimento")),
                 avaliacao,
-                StatusUsuario.valueOf((String) dados.get("status")),
-                toInstant((Timestamp) dados.get("cadastradoEm"))
+                StatusUsuario.valueOf(doc.getString("status")),
+                toInstant(doc.getTimestamp("cadastradoEm"))
         );
     }
 

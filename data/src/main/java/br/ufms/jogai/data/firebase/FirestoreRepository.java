@@ -37,10 +37,11 @@ import java.util.concurrent.ForkJoinPool;
  * Generic Firestore persistence with optional uniqueness constraints on required String fields.
  *
  * <p>Subclasses declare a collection, optionally declare a unique scope and field names, and
- * implement {@link #entityToMap(Entidade)} and {@link #mapToEntity(String, Map)}. The domain owns
- * validation and normalization; mappings must preserve its canonical values and entity IDs.
- * Reconstructed entities must be independent of the original mutable entity. Mappings must not
- * perform external side effects, since reconstruction can also occur in a retried transaction.
+ * implement {@link #entityToMap(Entidade)} and {@link #documentToEntity(DocumentSnapshot)}. The domain owns
+ * validation and normalization; mappings must preserve canonical values and entity IDs.
+ * Document mappings reconstruct entities from snapshots. Writes return the same entity instance
+ * supplied to the repository. Entity data is captured synchronously before writes begin, so later
+ * mutations do not change the payload submitted to Firestore.
  *
  * <p>Without unique fields, writes use Firestore's single-document operations. With unique fields,
  * the entity and its reservations are written in one transaction. A value already owned by the
@@ -63,7 +64,9 @@ import java.util.concurrent.ForkJoinPool;
 public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Serializable>
         implements Repository<E, ID> {
 
-    /** Maximum number of entities returned by a page. */
+    /**
+     * Maximum number of entities returned by a page.
+     */
     public static final int MAX_PAGE_SIZE = 200;
 
     /**
@@ -91,7 +94,8 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
     /**
      * Creates a repository whose unique values are scoped to the full collection path.
      * This also isolates identically named subcollections under different parent documents.
-     * @param collection the root collection or subcollection managed by this repository
+     *
+     * @param collection   the root collection or subcollection managed by this repository
      * @param uniqueFields required canonical String fields, unique within this collection
      */
     protected FirestoreRepository(CollectionReference collection, Set<String> uniqueFields) {
@@ -128,7 +132,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      * Creates a new entity, rejecting an existing ID or another entity's unique values.
      *
      * @param entity the validated entity to create
-     * @return a future containing an independent reconstruction of the captured entity data
+     * @return a future containing the same entity instance supplied to this method
      * @see #duplicateValueException(String)
      */
     public final CompletableFuture<E> create(E entity) {
@@ -142,7 +146,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      * nor its reservations changes. Fields absent from the mapping are removed from the document.
      *
      * @param entity the validated entity to save
-     * @return a future containing an independent reconstruction of the captured entity data
+     * @return a future containing the same entity instance supplied to this method
      */
     @Override
     public final CompletableFuture<E> save(E entity) {
@@ -209,11 +213,10 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
         var reference = documentReference(entity.getId());
         String id = reference.getId();
         Map<String, Object> data = captureEntityData(entity);
-        E result = Objects.requireNonNull(mapToEntity(id, data), "Entity mapper must not return null");
-        if (!id.equals(idToStr(result.getId()))) {
-            throw new IllegalArgumentException("Entity mapper must preserve the document ID");
+        if (!id.equals(idToStr(entity.getId()))) {
+            throw new IllegalArgumentException("Entity ID must match the document ID");
         }
-        return new CapturedEntity<>(reference, data, extractUniqueValues(data), result);
+        return new CapturedEntity<>(reference, data, extractUniqueValues(data), entity);
     }
 
     final String uniqueScope() {
@@ -249,7 +252,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
         for (Object value : data.values()) {
             if (value == null) {
                 // Map.copyOf rejects nulls; preserve optional fields with a defensive snapshot.
-                return Collections.unmodifiableMap(new HashMap<>(data));
+                return Map.copyOf(data);
             }
         }
         // The JDK can reuse an immutable source map; mutable maps are defensively copied.
@@ -310,8 +313,9 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
 
     /**
      * Loads a bounded page in document-ID order. The cursor remains usable if its document is deleted.
+     *
      * @param pageSize maximum entities returned, from 1 to MAX_PAGE_SIZE
-     * @param afterId exclusive document-ID cursor, or null for the first page
+     * @param afterId  exclusive document-ID cursor, or null for the first page
      * @return entities and an optional cursor, based on one extra look-ahead document
      */
     @Override
@@ -324,9 +328,10 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
 
     /**
      * Executes one bounded page of a filtered or ordered query.
-     * @param query query filters and ordering; do not supply a conflicting start cursor
+     *
+     * @param query    query filters and ordering; do not supply a conflicting start cursor
      * @param pageSize maximum returned entities, from 1 to MAX_PAGE_SIZE
-     * @param afterId ID of the last returned entity from the same query, or null
+     * @param afterId  ID of the last returned entity from the same query, or null
      * @return the bounded page; a missing cursor document fails instead of restarting pagination
      * <p>Ordered queries use a snapshot cursor, requiring one extra document read after the first
      * page. Pagination is not a frozen database snapshot; concurrent edits can change later pages.
@@ -482,16 +487,6 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
     }
 
     /**
-     * Captures a persistable representation of a valid domain entity.
-     *
-     * @param entity the source entity
-     * @return a non-null map containing the canonical unique values; non-unique fields may be null
-     * <p><strong>Implementation contract:</strong> Do not normalize values here. Preserve domain values and copy mutable nested
-     * structures so subsequent changes to the original entity cannot alter the captured write.
-     */
-    protected abstract Map<String, Object> entityToMap(E entity);
-
-    /**
      * Supplies the exception used for duplicate IDs and unique-field conflicts.
      *
      * @param field the conflicting persisted field name, or {@code "id"} for an existing ID
@@ -503,23 +498,20 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
     }
 
     /**
+     * Captures a persistable representation of a valid domain entity.
+     *
+     * @param entity the source entity
+     * @return a non-null map containing the canonical unique values; non-unique fields may be null
+     * <p><strong>Implementation contract:</strong> Do not normalize values here. Preserve domain values and copy mutable nested
+     * structures so subsequent changes to the original entity cannot alter the captured write.
+     */
+    protected abstract Map<String, Object> entityToMap(E entity);
+
+    /**
      * Reconstructs an existing document through the domain mapper.
      *
      * @param document an existing document snapshot
-     * @return an independent domain entity
+     * @return the domain entity represented by the snapshot
      */
-    protected final E documentToEntity(DocumentSnapshot document) {
-        return mapToEntity(document.getId(), document.getData());
-    }
-
-    /**
-     * Reconstructs an independent domain entity for reads and captured write results.
-     *
-     * @param id   the document ID to preserve
-     * @param data the persisted or captured data; this map may be unmodifiable
-     * @return a non-null entity whose construction enforces domain invariants
-     * <p><strong>Implementation contract:</strong> Do not mutate the supplied map or generate a new ID. Reconstruct mutable nested
-     * values independently, and apply validation and normalization through the domain itself.
-     */
-    protected abstract E mapToEntity(String id, Map<String, Object> data);
+    protected abstract E documentToEntity(DocumentSnapshot document);
 }

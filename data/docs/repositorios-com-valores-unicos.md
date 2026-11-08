@@ -159,11 +159,11 @@ public final class CategoriaExemploRepository extends FirestoreRepository<Catego
     }
 
     @Override
-    protected CategoriaExemplo mapToEntity(String id, Map<String, Object> dados) {
+    protected CategoriaExemplo documentToEntity(DocumentSnapshot document) {
         return new CategoriaExemplo(
-                idToUUID(id),
-                (String) dados.get("nome"),
-                (String) dados.get("codigo")
+                idToUUID(document.getId()),
+                document.getString("nome"),
+                document.getString("codigo")
         );
     }
 }
@@ -174,18 +174,15 @@ esses métodos finais são herdados da classe base. Eles são finais para evitar
 substituir acidentalmente a persistência protegida por uma gravação simples.
 `get`, `getPage` e os métodos auxiliares de consultas limitadas estão disponíveis.
 
-O repositório concreto implementa apenas dois mapeamentos:
+O repositório concreto implementa dois mapeamentos:
 
 - `entityToMap(entidade)` captura os dados que serão gravados.
-- `mapToEntity(id, dados)` reconstrói uma entidade independente a partir desses dados.
+- `documentToEntity(document)` reconstrói a entidade usando os getters tipados do snapshot.
 
-A classe base usa `mapToEntity` tanto na leitura de documentos quanto para
-construir o resultado da gravação. Não é necessário implementar `copiar` nem
-`documentToEntity`. O ID recebido deve ser preservado, sem gerar outro UUID.
-Para entidades com listas ou objetos mutáveis internos, os mapeamentos devem
-produzir estruturas independentes. A captura evita que uma edição feita após
-iniciar a operação mude os dados usados nas tentativas da transação. Valores
-normalizados persistidos e resultado da gravação usam o mesmo mapa.
+A classe base usa `documentToEntity` nas leituras. `create` e `save` retornam a
+mesma instância recebida; por isso, a captura dos dados para gravação ocorre
+antes da operação assíncrona, e alterações posteriores não mudam os dados usados
+nas tentativas da transação. O ID do snapshot deve ser preservado.
 
 ## Uso pelo service ou exemplo de aplicação
 

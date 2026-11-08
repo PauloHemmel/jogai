@@ -7,6 +7,7 @@ import br.ufms.jogai.domain.jogo.CategoriaRepository;
 import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -31,11 +32,11 @@ public class CategoriaFirestoreRepository extends FirestoreRepository<CategoriaJ
     }
 
     @Override
-    protected CategoriaJogo mapToEntity(String tag, Map<String, Object> data) {
+    protected CategoriaJogo documentToEntity(DocumentSnapshot document) {
         return CategoriaJogo.reconstitute(
-                tag,
-                (String) data.get("nome"),
-                (String) data.get("descricao")
+                document.getId(),
+                document.getString("nome"),
+                document.getString("descricao")
         );
     }
 

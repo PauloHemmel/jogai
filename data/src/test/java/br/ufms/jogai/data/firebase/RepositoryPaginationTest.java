@@ -4,6 +4,7 @@ import br.ufms.jogai.domain.shared.Entidade;
 import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.shared.Repository;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -173,9 +174,9 @@ class RepositoryPaginationTest {
         }
 
         @Override
-        protected Item mapToEntity(String id, Map<String, Object> data) {
+        protected Item documentToEntity(DocumentSnapshot document) {
             mappings.incrementAndGet();
-            return new Item(id, (String) data.get("name"), (String) data.get("group"));
+            return new Item(document.getId(), document.getString("name"), document.getString("group"));
         }
 
         CompletableFuture<Page<Item, String>> byGroup(String group, int size, String cursor) {

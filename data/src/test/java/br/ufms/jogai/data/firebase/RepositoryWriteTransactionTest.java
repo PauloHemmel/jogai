@@ -7,6 +7,7 @@ import br.ufms.jogai.data.repository.UsuarioFirestoreRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.api.gax.grpc.GrpcStatusCode;
 import com.google.api.gax.rpc.AbortedException;
@@ -204,8 +205,8 @@ class RepositoryWriteTransactionTest {
             }
 
             @Override
-            protected CategoriaExemplo mapToEntity(String id, Map<String, Object> data) {
-                return new CategoriaExemplo(idToUUID(id), (String) data.get("nome"), (String) data.get("codigo"));
+            protected CategoriaExemplo documentToEntity(DocumentSnapshot document) {
+                return new CategoriaExemplo(idToUUID(document.getId()), document.getString("nome"), document.getString("codigo"));
             }
         };
         var result = users.writeTransaction(writes -> List.of(writes.create(users, user("a", 1)),
@@ -373,8 +374,8 @@ class RepositoryWriteTransactionTest {
             }
 
             @Override
-            protected CategoriaExemplo mapToEntity(String id, Map<String, Object> data) {
-                return new CategoriaExemplo(UUID.randomUUID(), (String) data.get("nome"), (String) data.get("codigo"));
+            protected CategoriaExemplo documentToEntity(DocumentSnapshot document) {
+                return new CategoriaExemplo(UUID.randomUUID(), document.getString("nome"), document.getString("codigo"));
             }
         };
         assertThrows(IllegalArgumentException.class, () -> users.writeTransaction(writes -> {
@@ -406,8 +407,8 @@ class RepositoryWriteTransactionTest {
             }
 
             @Override
-            protected CategoriaExemplo mapToEntity(String id, Map<String, Object> data) {
-                return new CategoriaExemplo(idToUUID(id), (String) data.get("nome"), (String) data.get("codigo"));
+            protected CategoriaExemplo documentToEntity(DocumentSnapshot document) {
+                return new CategoriaExemplo(idToUUID(document.getId()), document.getString("nome"), document.getString("codigo"));
             }
         };
     }

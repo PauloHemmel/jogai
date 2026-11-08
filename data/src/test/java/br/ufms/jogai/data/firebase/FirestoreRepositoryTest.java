@@ -2,6 +2,7 @@ package br.ufms.jogai.data.firebase;
 
 import br.ufms.jogai.domain.shared.Entidade;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -186,8 +187,8 @@ class FirestoreRepositoryTest {
         }
 
         @Override
-        protected Registro mapToEntity(String id, Map<String, Object> dados) {
-            return new Registro(id, (String) dados.get("valor"));
+        protected Registro documentToEntity(DocumentSnapshot document) {
+            return new Registro(document.getId(), document.getString("valor"));
         }
 
         CompletableFuture<java.util.Optional<Registro>> buscar(String valor) {

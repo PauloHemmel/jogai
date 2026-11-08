@@ -31,7 +31,7 @@ reservas na mesma transação e usa o caminho completo da coleção como escopo.
 repetir um escopo manual no construtor. O construtor com escopo explícito continua
 disponível. Cada repositório
 concreto declara somente os nomes dos campos únicos com `Set.of(...)` e
-implementa `entityToMap` e `mapToEntity`. Validação e normalização pertencem ao
+implementa `entityToMap` e `documentToEntity(DocumentSnapshot)`. Validação e normalização pertencem ao
 domínio; a persistência verifica o tipo dos campos e a exclusividade dos valores. A reconstrução também serve para capturar o resultado
 independente da gravação, sem um método `copiar`. `UsuarioFirestoreRepository` traduz os
 conflitos em `UsuarioDuplicadoException`.
@@ -100,7 +100,7 @@ A classe separada `FirestoreRepositoryComValoresUnicos` foi incorporada ao
 `FirestoreRepository`. Os antigos métodos protegidos de gravação/exclusão bruta
 com `Transaction` foram removidos para não oferecer um atalho que ignorasse as
 reservas. Os repositórios concretos continuam implementando apenas `entityToMap`
-e `mapToEntity`.
+e `documentToEntity(DocumentSnapshot)`.
 
 O teste `FirestoreRepositoryTest` cobre o fluxo sem campos únicos: valores
 repetidos, conflito de ID, concorrência, criação/atualização, consultas, exclusão

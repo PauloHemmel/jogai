@@ -7,6 +7,7 @@ import br.ufms.jogai.data.exemplo.CategoriaExemploRepository;
 import br.ufms.jogai.data.exemplo.RegistrationExampleRepository;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -250,8 +251,8 @@ class SubcollectionTransactionTest {
         }
 
         @Override
-        protected Item mapToEntity(String id, Map<String, Object> data) {
-            return item(id, (String) data.get("value"));
+        protected Item documentToEntity(DocumentSnapshot document) {
+            return item(document.getId(), document.getString("value"));
         }
 
         private CompletableFuture<Void> commit(Consumer<RepositoryWriteTransaction> planner) {

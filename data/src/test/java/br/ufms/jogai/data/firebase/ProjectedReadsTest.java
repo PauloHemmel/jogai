@@ -3,6 +3,7 @@ package br.ufms.jogai.data.firebase;
 import br.ufms.jogai.domain.shared.Entidade;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
+import com.google.cloud.firestore.DocumentSnapshot;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,8 +88,8 @@ class ProjectedReadsTest {
         }
 
         @Override
-        protected Payload mapToEntity(String id, Map<String, Object> data) {
-            return new Payload(id, (String) data.get("contact.email"), (String) data.get("payload"));
+        protected Payload documentToEntity(DocumentSnapshot document) {
+            return new Payload(document.getId(), document.getString("contact.email"), document.getString("payload"));
         }
     }
 }
