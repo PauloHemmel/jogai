@@ -42,13 +42,11 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
                 "email", entity.getEmail(),
                 "telefone", entity.getTelefone(),
                 "nascimento", toTimestamp(entity.getDataNascimento()),
-                "avaliacaoComodante", Map.of(
-                        "quantidade", entity.getQuantidadeAvaliacoesComodante(),
-                        "media", entity.getNotaAvaliacaoComodante()
-                ),
-                "avaliacaoComodatario", Map.of(
-                        "quantidade", entity.getQuantidadeAvaliacoesComodatario(),
-                        "media", entity.getNotaAvaliacaoComodatario()
+                "avaliacao", Map.of(
+                        "qtdAvaliacoesComodante", entity.getQuantidadeAvaliacoesComodante(),
+                        "mediaAvaliacaoComodante", entity.getNotaAvaliacaoComodante(),
+                        "qtdAvaliacoesComodatario", entity.getQuantidadeAvaliacoesComodatario(),
+                        "mediaAvaliacaoComodatario", entity.getNotaAvaliacaoComodante()
                 ),
                 "status", entity.getStatus().name(),
                 "cadastradoEm", toTimestamp(entity.getDataCadastro())
@@ -58,41 +56,27 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
 
     @Override
     protected Usuario mapToEntity(String id, Map<String, Object> dados) {
-        var avaliacaoComodante = obterMapa(dados, "avaliacaoComodante");
-        var avaliacaoComodatario = obterMapa(dados, "avaliacaoComodatario");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> avaliacaoMap = (Map<String, Object>) dados.get("avaliacao");
 
-        var avaliacaoMedia = AvaliacaoMediaUsuario.reconstitute(
-                obterNumero(avaliacaoComodante, "quantidade").longValue(),
-                obterNumero(avaliacaoComodante, "media").doubleValue(),
-                obterNumero(avaliacaoComodatario, "quantidade").longValue(),
-                obterNumero(avaliacaoComodatario, "media").doubleValue()
+        AvaliacaoMediaUsuario avaliacao = AvaliacaoMediaUsuario.reconstitute(
+                ((Number) avaliacaoMap.get("qtdAvaliacoesComodante")).longValue(),
+                ((Number) avaliacaoMap.get("mediaAvaliacaoComodante")).doubleValue(),
+                ((Number) avaliacaoMap.get("qtdAvaliacoesComodatario")).longValue(),
+                ((Number) avaliacaoMap.get("mediaAvaliacaoComodatario")).doubleValue()
         );
 
         return Usuario.reconstitute(
-                idToUUID(id),
+                UUID.fromString(id),
                 (String) dados.get("nome"),
                 (String) dados.get("usuario"),
                 (String) dados.get("email"),
                 (String) dados.get("telefone"),
                 toLocalDate((Timestamp) dados.get("nascimento")),
-                avaliacaoMedia,
+                avaliacao,
                 StatusUsuario.valueOf((String) dados.get("status")),
                 toInstant((Timestamp) dados.get("cadastradoEm"))
         );
-    }
-
-    private static Map<?, ?> obterMapa(Map<String, Object> dados, String campo) {
-        if (dados.get(campo) instanceof Map<?, ?> mapa) {
-            return mapa;
-        }
-        throw new IllegalStateException("Campo '%s' ausente ou inválido no documento.".formatted(campo));
-    }
-
-    private static Number obterNumero(Map<?, ?> dados, String campo) {
-        if (dados.get(campo) instanceof Number numero) {
-            return numero;
-        }
-        throw new IllegalStateException("Campo numérico '%s' ausente ou inválido.".formatted(campo));
     }
 
     @Override

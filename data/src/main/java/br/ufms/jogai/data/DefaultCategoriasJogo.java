@@ -4,7 +4,6 @@ import br.ufms.jogai.data.repository.CategoriaFirestoreRepository;
 import br.ufms.jogai.domain.jogo.CategoriaJogo;
 import br.ufms.jogai.domain.jogo.CategoriaRepository;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
