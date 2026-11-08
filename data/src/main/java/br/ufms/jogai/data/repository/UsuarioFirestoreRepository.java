@@ -46,11 +46,10 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
                         "qtdAvaliacoesComodante", entity.getQuantidadeAvaliacoesComodante(),
                         "mediaAvaliacaoComodante", entity.getNotaAvaliacaoComodante(),
                         "qtdAvaliacoesComodatario", entity.getQuantidadeAvaliacoesComodatario(),
-                        "mediaAvaliacaoComodatario", entity.getNotaAvaliacaoComodante()
+                        "mediaAvaliacaoComodatario", entity.getNotaAvaliacaoComodatario()
                 ),
                 "status", entity.getStatus().name(),
                 "cadastradoEm", toTimestamp(entity.getDataCadastro())
-
         );
     }
 
