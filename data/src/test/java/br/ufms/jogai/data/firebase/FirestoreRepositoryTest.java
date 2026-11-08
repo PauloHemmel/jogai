@@ -98,13 +98,13 @@ class FirestoreRepositoryTest {
     }
 
     @Test
-    void resultadoNaoCompartilhaObjetoMutavelEMapeamentoAceitaNulosOpcionais() throws Exception {
+    void escritaRetornaInstanciaRecebidaEMapeamentoAceitaNulosOpcionais() throws Exception {
         Registro original = new Registro("a", "capturado");
         var cadastro = repository.create(original);
         original.valor = "alterado";
         Registro resultado = aguardar(cadastro);
-        assertNotSame(original, resultado);
-        assertEquals("capturado", resultado.valor);
+        assertSame(original, resultado);
+        assertEquals("alterado", resultado.valor);
         assertEquals("capturado", aguardar(repository.get("a")).orElseThrow().valor);
         aguardar(repository.save(new Registro("b", null)));
         assertNull(aguardar(repository.get("b")).orElseThrow().valor);

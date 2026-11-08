@@ -89,7 +89,8 @@ class ProjectedReadsTest {
 
         @Override
         protected Payload documentToEntity(DocumentSnapshot document) {
-            return new Payload(document.getId(), document.getString("contact.email"), document.getString("payload"));
+            return new Payload(document.getId(), (String) document.getData().get("contact.email"),
+                    document.getString("payload"));
         }
     }
 }

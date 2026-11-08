@@ -4,7 +4,6 @@ import br.ufms.jogai.data.firebase.FirestoreRepository;
 import br.ufms.jogai.data.firebase.config.FirebaseConfig;
 import br.ufms.jogai.domain.usuario.*;
 import br.ufms.jogai.domain.shared.Page;
-import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.Timestamp;
@@ -57,10 +56,10 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
     @Override
     protected Usuario documentToEntity(DocumentSnapshot doc) {
         AvaliacaoMediaUsuario avaliacao = AvaliacaoMediaUsuario.reconstitute(
-                doc.getLong("avaliacao.qtdAvaliacoesComodante"),
-                doc.getDouble("avaliacao.mediaAvaliacaoComodante"),
-                doc.getLong("avaliacao.qtdAvaliacoesComodatario"),
-                doc.getDouble("avaliacao.mediaAvaliacaoComodatario")
+                Objects.requireNonNull(doc.getLong("avaliacao.qtdAvaliacoesComodante")),
+                Objects.requireNonNull(doc.getDouble("avaliacao.mediaAvaliacaoComodante")),
+                Objects.requireNonNull(doc.getLong("avaliacao.qtdAvaliacoesComodatario")),
+                Objects.requireNonNull(doc.getDouble("avaliacao.mediaAvaliacaoComodatario"))
         );
 
         return Usuario.reconstitute(
@@ -89,21 +88,18 @@ public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUI
     @Override
     public CompletableFuture<Optional<Usuario>> buscarPorUsuario(String usuario) {
         Objects.requireNonNull(usuario);
-
         return queryOne(collection.whereEqualTo("usuario", usuario));
     }
 
     @Override
     public CompletableFuture<Optional<Usuario>> buscarPorEmail(String email) {
         Objects.requireNonNull(email);
-
         return queryOne(collection.whereEqualTo("email", email));
     }
 
     @Override
     public CompletableFuture<Optional<Usuario>> buscarPorTelefone(String telefone) {
         Objects.requireNonNull(telefone);
-
         return queryOne(collection.whereEqualTo("telefone", telefone));
     }
 

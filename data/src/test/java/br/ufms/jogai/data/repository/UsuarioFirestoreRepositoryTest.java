@@ -4,6 +4,7 @@ import br.ufms.jogai.data.firebase.UniqueValuesFirestoreRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import br.ufms.jogai.domain.usuario.StatusUsuario;
+import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.junit.jupiter.api.AfterEach;
@@ -258,13 +259,15 @@ class UsuarioFirestoreRepositoryTest {
     }
 
     @Test
-    void consultasUsamAsMesmasRegrasDoDominioParaEntradasNaoNormalizadas() throws Exception {
+    void consultasRecebemValoresNormalizadosPelaCamadaSuperior() throws Exception {
         Usuario a = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
 (a));
-        assertEquals(a.getId(), aguardar(repository.buscarPorEmail(" A@Example.com ")).orElseThrow().getId());
-        assertEquals(a.getId(), aguardar(repository.buscarPorTelefone("(67) 99612-2809")).orElseThrow().getId());
+        assertEquals(a.getId(), aguardar(repository.buscarPorEmail(Validar.email(" A@Example.com "))).orElseThrow().getId());
+        assertEquals(a.getId(), aguardar(repository.buscarPorTelefone(Validar.telefone("(67) 99612-2809"))).orElseThrow().getId());
+        assertTrue(aguardar(repository.buscarPorEmail(" A@Example.com ")).isEmpty());
+        assertTrue(aguardar(repository.buscarPorTelefone("(67) 99612-2809")).isEmpty());
     }
 
     @Test
@@ -461,7 +464,7 @@ class UsuarioFirestoreRepositoryTest {
     }
 
     @Test
-    void alterarObjetoAposIniciarCadastroNaoMudaOsDadosDaOperacao() throws Exception {
+    void alterarObjetoAposIniciarCadastroNaoMudaPayloadPersistido() throws Exception {
         Usuario a = usuario("a@example.com", "67996122809");
         var cadastro = repository.create
 
@@ -470,8 +473,10 @@ class UsuarioFirestoreRepositoryTest {
         a.setTelefone("67996122810");
         Usuario resultado = aguardar(cadastro);
         assertEquals(a.getDataCadastro(), resultado.getDataCadastro());
-        assertEquals("a@example.com", resultado.getEmail());
-        assertEquals("67996122809", resultado.getTelefone());
+        assertSame(a, resultado);
+        var persistido = aguardar(repository.get(a.getId())).orElseThrow();
+        assertEquals("a@example.com", persistido.getEmail());
+        assertEquals("67996122809", persistido.getTelefone());
         assertReservasConsistentes();
     }
 

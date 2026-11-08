@@ -45,7 +45,7 @@ class CategoriaFirestoreRepositoryTest {
         assertEquals("rpg", criada.getTag());
         assertEquals("RPG", criada.getNome());
         assertEquals("Jogos de interpretação", criada.getDescricao());
-        assertNotSame(categoria, criada);
+        assertSame(categoria, criada);
         assertCategoria(criada, aguardar(repository.get("rpg")).orElseThrow());
         assertEquals(1, aguardar(repository.getAll()).size());
         assertEquals("rpg", aguardar(repository.getAll()).iterator().next().getTag());

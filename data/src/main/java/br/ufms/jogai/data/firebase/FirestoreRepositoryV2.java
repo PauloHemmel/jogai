@@ -37,7 +37,9 @@ public abstract class FirestoreRepositoryV2<
         D extends EntityDocument<E>>
         implements Repository<E, ID> {
 
-    /** Maximum number of entities returned by a page. */
+    /**
+     * Maximum number of entities returned by a page.
+     */
     public static final int MAX_PAGE_SIZE = 200;
 
     /**
@@ -67,7 +69,8 @@ public abstract class FirestoreRepositoryV2<
     /**
      * Creates a repository whose unique values are scoped to the full collection path.
      * This also isolates identically named subcollections under different parent documents.
-     * @param collection the root collection or subcollection managed by this repository
+     *
+     * @param collection   the root collection or subcollection managed by this repository
      * @param uniqueFields required canonical String fields, unique within this collection
      */
     protected FirestoreRepositoryV2(CollectionReference collection, Class<D> documentType, Set<String> uniqueFields,
@@ -122,7 +125,8 @@ public abstract class FirestoreRepositoryV2<
             for (var method : type.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Unique.class) && method.getParameterCount() == 0) {
                     String name = method.getName();
-                    if (name.startsWith("get") && name.length() > 3) name = Character.toLowerCase(name.charAt(3)) + name.substring(4);
+                    if (name.startsWith("get") && name.length() > 3)
+                        name = Character.toLowerCase(name.charAt(3)) + name.substring(4);
                     fields.add(name);
                 }
             }
@@ -325,13 +329,14 @@ public abstract class FirestoreRepositoryV2<
 
     /**
      * Loads a bounded page in document-ID order. The cursor remains usable if its document is deleted.
+     *
      * @param pageSize maximum entities returned, from 1 to MAX_PAGE_SIZE
-     * @param afterId exclusive document-ID cursor, or null for the first page
+     * @param afterId  exclusive document-ID cursor, or null for the first page
      * @return entities and an optional cursor, based on one extra look-ahead document
      */
     @Override
     public final CompletableFuture<Page<E, ID>> getPage(int pageSize, ID afterId) {
-        validateLimit(pageSize, MAX_PAGE_SIZE);
+        validateLimit(pageSize);
         Query query = collection.orderBy(FieldPath.documentId());
         if (afterId != null) query = query.startAfter(documentReference(afterId).getId());
         return readPage(query, pageSize);
@@ -339,16 +344,17 @@ public abstract class FirestoreRepositoryV2<
 
     /**
      * Executes one bounded page of a filtered or ordered query.
-     * @param query query filters and ordering; do not supply a conflicting start cursor
+     *
+     * @param query    query filters and ordering; do not supply a conflicting start cursor
      * @param pageSize maximum returned entities, from 1 to MAX_PAGE_SIZE
-     * @param afterId ID of the last returned entity from the same query, or null
+     * @param afterId  ID of the last returned entity from the same query, or null
      * @return the bounded page; a missing cursor document fails instead of restarting pagination
      * <p>Ordered queries use a snapshot cursor, requiring one extra document read after the first
      * page. Pagination is not a frozen database snapshot; concurrent edits can change later pages.
      */
     protected final CompletableFuture<Page<E, ID>> queryPage(Query query, int pageSize, ID afterId) {
         Objects.requireNonNull(query, "Query must not be null");
-        validateLimit(pageSize, MAX_PAGE_SIZE);
+        validateLimit(pageSize);
         if (afterId == null) return readPage(query, pageSize);
         return toCompletableFuture(documentReference(afterId).get()).thenCompose(cursor -> {
             if (!cursor.exists()) throw new IllegalArgumentException("Page cursor document no longer exists");
@@ -368,9 +374,9 @@ public abstract class FirestoreRepositoryV2<
         });
     }
 
-    private static void validateLimit(int limit, int maximum) {
-        if (limit < 1 || limit > maximum) {
-            throw new IllegalArgumentException("Limit must be between 1 and " + maximum);
+    private static void validateLimit(int limit) {
+        if (limit < 1 || limit > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("Limit must be between 1 and " + MAX_PAGE_SIZE);
         }
     }
 
@@ -517,170 +523,4 @@ public abstract class FirestoreRepositoryV2<
         D dto = Objects.requireNonNull(document.toObject(documentType), "Firestore returned an empty document");
         return Objects.requireNonNull(dto.toEntity(), "Document mapper must not return null");
     }
-
-//    protected abstract D toDocument(E entity);
-
-//    private final Class<D> documentType;
-//
-//    protected FirestoreRepositoryV2(CollectionReference collection, Class<D> documentType) {
-//        super(collection, uniqueFields(documentType));
-//        this.documentType = Objects.requireNonNull(documentType);
-//    }
-//
-//    protected abstract D toDocument(E entity);
-//
-//    protected abstract D fromDocument(DocumentSnapshot document);
-//
-//    protected E toEntity(D document) {
-//        return document.toEntity();
-//    }
-//
-//    @Override
-//    protected final Map<String, Object> entityToMap(E entity) {
-//        return uniqueValues(toDocument(entity));
-//    }
-//
-//    @Override
-//    protected final Object entityToDocument(E entity, Map<String, Object> mappedData) {
-//        return toDocument(entity);
-//    }
-//
-//    @Override
-//    protected final E copyEntity(String id, E entity, Map<String, Object> mappedData) {
-//        return toEntity(toDocument(entity));
-//    }
-//
-//    @Override
-//    protected final E snapshotToEntity(DocumentSnapshot document) {
-//        return toEntity(fromDocument(document));
-//    }
-//
-//    @Override
-//    protected final E mapToEntity(String id, Map<String, Object> data) {
-//        throw new UnsupportedOperationException("V2 repositories reconstruct entities from document DTOs");
-//    }
-//
-//    @Override
-//    protected final String uniqueValueToKey(String field, Object value) {
-//        if (value == null) {
-//            throw new IllegalArgumentException("Unique Firestore field " + field + " must not be null");
-//        }
-//        return canonicalValue(value);
-//    }
-//
-//    private static Set<String> uniqueFields(Class<?> documentType) {
-//        Objects.requireNonNull(documentType, "Document type must not be null");
-//        if (!documentType.isRecord()) {
-//            throw new IllegalArgumentException("Firestore document type must be a record");
-//        }
-//        return java.util.Arrays.stream(documentType.getRecordComponents())
-//                .filter(component -> component.isAnnotationPresent(Unique.class))
-//                .map(RecordComponent::getName)
-//                .collect(java.util.stream.Collectors.toUnmodifiableSet());
-//    }
-//
-//    private Map<String, Object> uniqueValues(D document) {
-//        Map<String, Object> values = new HashMap<>();
-//        for (RecordComponent component : documentType.getRecordComponents()) {
-//            if (!component.isAnnotationPresent(Unique.class)) continue;
-//            try {
-//                Object value = component.getAccessor().invoke(document);
-//                values.put(component.getName(), value);
-//            } catch (IllegalAccessException | InvocationTargetException error) {
-//                throw new IllegalStateException(
-//                        "Could not read unique Firestore field " + component.getName(), error);
-//            }
-//        }
-//        return values;
-//    }
-//
-//    private static String canonicalValue(Object value) {
-//        switch (value) {
-//            case null -> {
-//                return "null";
-//            }
-//            case String text -> {
-//                return text;
-//            }
-//            case Boolean bool -> {
-//                return "boolean:" + bool;
-//            }
-//            case Number number -> {
-//                return "number:" + canonicalNumber(number);
-//            }
-//            case Timestamp timestamp -> {
-//                return "timestamp:" + timestamp.getSeconds() + ":" + timestamp.getNanos();
-//            }
-//            case Date date -> {
-//                Instant instant = date.toInstant();
-//                return "timestamp:" + instant.getEpochSecond() + ":" + instant.getNano();
-//            }
-//            case GeoPoint point -> {
-//                return "geopoint:" + canonicalNumber(point.getLatitude()) + ":" +
-//                        canonicalNumber(point.getLongitude());
-//            }
-//            case Blob blob -> {
-//                return "blob:" + Base64.getEncoder().encodeToString(blob.toBytes());
-//            }
-//            case byte[] bytes -> {
-//                return "blob:" + Base64.getEncoder().encodeToString(bytes);
-//            }
-//            case DocumentReference reference -> {
-//                return "reference:" + reference.getFirestore().getOptions().getProjectId() + ":" + reference.getPath();
-//            }
-//            case Enum<?> enumeration -> {
-//                return enumeration.name();
-//            }
-//            case Collection<?> collection -> {
-//                return "list:" + collection.stream().map(FirestoreRepositoryV2::canonicalValue)
-//                        .map(FirestoreRepositoryV2::frame).reduce("", String::concat);
-//            }
-//            case Map<?, ?> map -> {
-//                Map<String, Object> sorted = new TreeMap<>();
-//                map.forEach((key, nestedValue) -> {
-//                    if (!(key instanceof String stringKey)) {
-//                        throw new IllegalArgumentException("Firestore map keys must be strings");
-//                    }
-//                    sorted.put(stringKey, nestedValue);
-//                });
-//                StringBuilder result = new StringBuilder("map:");
-//                sorted.forEach((key, nestedValue) -> result.append(frame(key)).append(frame(canonicalValue(nestedValue))));
-//                return result.toString();
-//            }
-//            default -> {
-//            }
-//        }
-//        if (value.getClass().isArray()) {
-//            StringBuilder result = new StringBuilder("list:");
-//            for (int i = 0; i < Array.getLength(value); i++) {
-//                result.append(frame(canonicalValue(Array.get(value, i))));
-//            }
-//            return result.toString();
-//        }
-//        throw new IllegalArgumentException(
-//                "Unsupported unique Firestore field type: " + value.getClass().getName());
-//    }
-//
-//    private static String frame(String value) {
-//        return value.length() + ":" + value;
-//    }
-//
-//    private static String canonicalNumber(Number value) {
-//        if (value instanceof Double number) {
-//            if (number.isNaN()) return "NaN";
-//            if (number == Double.POSITIVE_INFINITY) return "+Infinity";
-//            if (number == Double.NEGATIVE_INFINITY) return "-Infinity";
-//        }
-//        if (value instanceof Float number) {
-//            if (number.isNaN()) return "NaN";
-//            if (number == Float.POSITIVE_INFINITY) return "+Infinity";
-//            if (number == Float.NEGATIVE_INFINITY) return "-Infinity";
-//        }
-//        if (!(value instanceof Byte || value instanceof Short || value instanceof Integer ||
-//                value instanceof Long || value instanceof BigInteger || value instanceof BigDecimal ||
-//                value instanceof Float || value instanceof Double)) {
-//            throw new IllegalArgumentException("Unsupported numeric unique field type: " + value.getClass().getName());
-//        }
-//        return new BigDecimal(value.toString()).stripTrailingZeros().toPlainString();
-//    }
 }

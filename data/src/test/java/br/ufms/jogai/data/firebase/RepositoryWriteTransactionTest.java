@@ -366,7 +366,7 @@ class RepositoryWriteTransactionTest {
     }
 
     @Test
-    void mapperCannotReturnAnEntityWithADifferentId() throws Exception {
+    void writeUsesEntityIdAndReadRejectsMapperWithADifferentId() throws Exception {
         var invalid = new FirestoreRepository<CategoriaExemplo, UUID>(db.collection("invalid_categories")) {
             @Override
             protected Map<String, Object> entityToMap(CategoriaExemplo entity) {
@@ -378,11 +378,15 @@ class RepositoryWriteTransactionTest {
                 return new CategoriaExemplo(UUID.randomUUID(), document.getString("nome"), document.getString("codigo"));
             }
         };
-        assertThrows(IllegalArgumentException.class, () -> users.writeTransaction(writes -> {
+        var entity = category("EST");
+        await(users.writeTransaction(writes -> {
             writes.create(users, user("a", 1));
-            return writes.create(invalid, category("EST"));
+            return writes.create(invalid, entity);
         }));
-        assertEmpty();
+        assertEquals(1, await(users.getPage(100).thenApply(page -> page.items())).size());
+        var mappingFailure = assertThrows(java.util.concurrent.ExecutionException.class,
+                () -> await(invalid.get(entity.getId())));
+        assertInstanceOf(IllegalArgumentException.class, mappingFailure.getCause());
     }
 
     @Test

@@ -22,6 +22,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -211,11 +214,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
     final CapturedEntity<E> capture(E entity) {
         Objects.requireNonNull(entity, "Entity must not be null");
         var reference = documentReference(entity.getId());
-        String id = reference.getId();
-        Map<String, Object> data = captureEntityData(entity);
-        if (!id.equals(idToStr(entity.getId()))) {
-            throw new IllegalArgumentException("Entity ID must match the document ID");
-        }
+        var data = captureEntityData(entity);
         return new CapturedEntity<>(reference, data, extractUniqueValues(data), entity);
     }
 
@@ -249,14 +248,46 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
 
     private Map<String, Object> captureEntityData(E entity) {
         Map<String, Object> data = Objects.requireNonNull(entityToMap(entity), "Entity data must not be null");
-        for (Object value : data.values()) {
-            if (value == null) {
-                // Map.copyOf rejects nulls; preserve optional fields with a defensive snapshot.
-                return Map.copyOf(data);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> captured = (Map<String, Object>) copyFirestoreValue(data, new IdentityHashMap<>());
+        return captured;
+    }
+
+    private static Object copyFirestoreValue(Object value, IdentityHashMap<Object, Boolean> active) {
+        switch (value) {
+            case null -> {
+                return null;
+            }
+            case Map<?, ?> map -> {
+                enterContainer(value, active);
+                Map<Object, Object> copy = new HashMap<>(map.size());
+                map.forEach((key, nested) -> copy.put(key, copyFirestoreValue(nested, active)));
+                active.remove(value);
+                return Collections.unmodifiableMap(copy);
+            }
+            case List<?> list -> {
+                enterContainer(value, active);
+                List<Object> copy = new ArrayList<>(list.size());
+                for (Object nested : list) copy.add(copyFirestoreValue(nested, active));
+                active.remove(value);
+                return Collections.unmodifiableList(copy);
+            }
+            case byte[] bytes -> {
+                return bytes.clone();
+            }
+            case Date date -> {
+                return new Date(date.getTime());
+            }
+            default -> {
             }
         }
-        // The JDK can reuse an immutable source map; mutable maps are defensively copied.
-        return Map.copyOf(data);
+        return value;
+    }
+
+    private static void enterContainer(Object value, IdentityHashMap<Object, Boolean> active) {
+        if (active.put(value, Boolean.TRUE) != null) {
+            throw new IllegalArgumentException("Entity data must not contain cyclic maps or lists");
+        }
     }
 
     final Map<String, String> extractUniqueValues(Map<String, Object> data) {
@@ -278,11 +309,11 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      * @param reference the non-null document reference
      * @return the reconstructed entity, or an empty Optional if the document is missing
      */
-    protected CompletableFuture<Optional<E>> get(DocumentReference reference) {
+    protected final CompletableFuture<Optional<E>> get(DocumentReference reference) {
         Objects.requireNonNull(reference, "Document reference must not be null");
         return toCompletableFuture(reference.get())
                 .thenApply(document -> document.exists() ?
-                        Optional.of(documentToEntity(document)) :
+                        Optional.of(mapDocumentToEntity(document)) :
                         Optional.empty());
     }
 
@@ -320,7 +351,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      */
     @Override
     public final CompletableFuture<Page<E, ID>> getPage(int pageSize, ID afterId) {
-        validateLimit(pageSize, MAX_PAGE_SIZE);
+        validateLimit(pageSize);
         Query query = collection.orderBy(FieldPath.documentId());
         if (afterId != null) query = query.startAfter(documentReference(afterId).getId());
         return readPage(query, pageSize);
@@ -338,7 +369,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      */
     protected final CompletableFuture<Page<E, ID>> queryPage(Query query, int pageSize, ID afterId) {
         Objects.requireNonNull(query, "Query must not be null");
-        validateLimit(pageSize, MAX_PAGE_SIZE);
+        validateLimit(pageSize);
         if (afterId == null) return readPage(query, pageSize);
         return toCompletableFuture(documentReference(afterId).get()).thenCompose(cursor -> {
             if (!cursor.exists()) throw new IllegalArgumentException("Page cursor document no longer exists");
@@ -351,16 +382,16 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
             var documents = snapshot.getDocuments();
             int count = Math.min(pageSize, documents.size());
             var items = new ArrayList<E>(count);
-            for (int i = 0; i < count; i++) items.add(documentToEntity(documents.get(i)));
+            for (int i = 0; i < count; i++) items.add(mapDocumentToEntity(documents.get(i)));
             Optional<ID> next = documents.size() > pageSize
                     ? Optional.of(items.getLast().getId()) : Optional.empty();
             return new Page<>(items, next);
         });
     }
 
-    private static void validateLimit(int limit, int maximum) {
-        if (limit < 1 || limit > maximum) {
-            throw new IllegalArgumentException("Limit must be between 1 and " + maximum);
+    private static void validateLimit(int limit) {
+        if (limit < 1 || limit > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("Limit must be between 1 and " + MAX_PAGE_SIZE);
         }
     }
 
@@ -370,12 +401,12 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      * @param query the non-null query; supply ordering when the first result must be predictable
      * @return the first matching entity, or an empty Optional
      */
-    protected CompletableFuture<Optional<E>> queryOne(Query query) {
+    protected final CompletableFuture<Optional<E>> queryOne(Query query) {
         Objects.requireNonNull(query, "Query must not be null");
         return toCompletableFuture(query.limit(1).get())
                 .thenApply(snapshot -> {
                     var documents = snapshot.getDocuments();
-                    return documents.isEmpty() ? Optional.empty() : Optional.of(documentToEntity(documents.getFirst()));
+                    return documents.isEmpty() ? Optional.empty() : Optional.of(mapDocumentToEntity(documents.getFirst()));
                 });
     }
 
@@ -385,8 +416,16 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
      * @param snapshot the query result
      * @return the reconstructed entities in query order
      */
-    protected Collection<E> documentsToEntities(QuerySnapshot snapshot) {
-        return snapshot.getDocuments().stream().map(this::documentToEntity).toList();
+    private Collection<E> documentsToEntities(QuerySnapshot snapshot) {
+        return snapshot.getDocuments().stream().map(this::mapDocumentToEntity).toList();
+    }
+
+    private E mapDocumentToEntity(DocumentSnapshot document) {
+        E entity = Objects.requireNonNull(documentToEntity(document), "Document mapper must not return null");
+        if (!document.getId().equals(idToStr(entity.getId()))) {
+            throw new IllegalArgumentException("Document mapper must preserve the document ID");
+        }
+        return entity;
     }
 
     /**
