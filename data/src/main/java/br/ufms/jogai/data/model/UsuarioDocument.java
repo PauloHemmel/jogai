@@ -13,12 +13,11 @@ import java.util.UUID;
 public record UsuarioDocument(
         @DocumentId String id,
         String nome,
-        @Unique String usuario,
+        String usuario,
         @Unique String email,
         @Unique String telefone,
         Timestamp nascimento,
-        EstatisticaAvaliacao avaliacaoComodante,
-        EstatisticaAvaliacao avaliacaoComodatario,
+        AvaliacaoUsuarioDocument avaliacao,
         String status,
         Timestamp cadastradoEm
 ) implements EntityDocument<Usuario> {
@@ -31,8 +30,8 @@ public record UsuarioDocument(
                 usuario.getEmail(),
                 usuario.getTelefone(),
                 EntityDocument.toTimestamp(usuario.getDataNascimento()),
-                new EstatisticaAvaliacao(usuario.getQuantidadeAvaliacoesComodante(), usuario.getNotaAvaliacaoComodante()),
-                new EstatisticaAvaliacao(usuario.getQuantidadeAvaliacoesComodatario(), usuario.getNotaAvaliacaoComodatario()),
+                new AvaliacaoUsuarioDocument(usuario.getQuantidadeAvaliacoesComodante(), usuario.getNotaAvaliacaoComodante(),
+                        usuario.getQuantidadeAvaliacoesComodatario(), usuario.getNotaAvaliacaoComodatario()),
                 usuario.getStatus().name(),
                 EntityDocument.toTimestamp(usuario.getDataCadastro())
         );
@@ -47,8 +46,8 @@ public record UsuarioDocument(
                 telefone,
                 EntityDocument.toLocalDate(nascimento),
                 AvaliacaoMediaUsuario.reconstitute(
-                        avaliacaoComodante().quantidade(), avaliacaoComodante.media(),
-                        avaliacaoComodatario().quantidade(), avaliacaoComodatario.media()
+                        avaliacao.qtdAvaliacoesComodante(), avaliacao.mediaAvaliacaoComodante(),
+                        avaliacao.qtdAvaliacoesComodatario(), avaliacao.mediaAvaliacaoComodatario()
                 ),
                 StatusUsuario.valueOf(status),
                 EntityDocument.toInstant(cadastradoEm)
