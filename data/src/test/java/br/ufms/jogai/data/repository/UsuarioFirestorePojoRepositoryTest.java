@@ -6,7 +6,6 @@ import br.ufms.jogai.data.model.shared.EntityDocument;
 import br.ufms.jogai.data.model.shared.Unique;
 import br.ufms.jogai.domain.shared.Entidade;
 import br.ufms.jogai.domain.usuario.Usuario;
-import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.cloud.firestore.CollectionReference;

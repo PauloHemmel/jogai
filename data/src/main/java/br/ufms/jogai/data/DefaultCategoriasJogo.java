@@ -28,7 +28,7 @@ public class DefaultCategoriasJogo {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    static void main(String[] args) throws Exception {
         new DefaultCategoriasJogo(new CategoriaFirestoreMapRepository()).executar();
         System.out.println("Categorias padrão inseridas ou já existentes.");
     }

@@ -2,7 +2,6 @@ package br.ufms.jogai.data.repository;
 
 import br.ufms.jogai.data.firebase.UniqueValuesFirestoreRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
-import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import br.ufms.jogai.domain.usuario.StatusUsuario;
 import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;

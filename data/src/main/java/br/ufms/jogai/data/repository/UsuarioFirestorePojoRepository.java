@@ -7,7 +7,6 @@ import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.usuario.StatusUsuario;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioRepository;
-import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import com.google.cloud.firestore.Firestore;
 
 import java.util.Objects;
@@ -24,8 +23,8 @@ public class UsuarioFirestorePojoRepository extends FirestorePojoRepository<Usua
     }
 
     public UsuarioFirestorePojoRepository(Firestore firestore) {
-        Objects.requireNonNull(firestore, "O cliente firestore não pode ser nulo");
-        super(firestore.collection("usuarios"), UsuarioDocument.class, UsuarioDocument::new);
+        super(Objects.requireNonNull(firestore).collection("categoriasJogo"),
+                UsuarioDocument.class, UsuarioDocument::new);
     }
 
     /**
@@ -36,11 +35,6 @@ public class UsuarioFirestorePojoRepository extends FirestorePojoRepository<Usua
         return writeTransaction(writes -> usuarios.stream()
                 .map(usuario -> writes.create(this, usuario))
                 .toList());
-    }
-
-    @Override
-    protected RuntimeException duplicateValueException(String campo) {
-        return new UsuarioDuplicadoException(campo);
     }
 
     @Override
