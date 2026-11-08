@@ -1,40 +1,66 @@
 package br.ufms.jogai.data.firebase;
 
-import br.ufms.jogai.data.model.shared.EntityDocument;
-import br.ufms.jogai.data.model.shared.EntityDocumentMapper;
 import br.ufms.jogai.domain.shared.Entidade;
-import br.ufms.jogai.data.model.shared.Unique;
-import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.shared.Repository;
+import br.ufms.jogai.domain.shared.Page;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.*;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.FieldPath;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.QuerySnapshot;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.RecordComponent;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
+import java.util.concurrent.ForkJoinPool;
 
 /**
- * Firestore repository variant that writes and reads typed document POJOs through the SDK mapper.
+ * Generic Firestore persistence with optional uniqueness constraints on required String fields.
  *
- * @param <E>  domain entity type
- * @param <ID> entity identifier type
- * @param <D>  Firestore document DTO type
+ * <p>Subclasses declare a collection, optionally declare a unique scope and field names, and
+ * subclasses provide representation-specific capture and document mapping. The domain owns
+ * validation and normalization; mappings must preserve canonical values and entity IDs.
+ * Document mappings reconstruct entities from snapshots. Writes return the same entity instance
+ * supplied to the repository. Entity data is captured synchronously before writes begin, so later
+ * mutations do not change the payload submitted to Firestore.
+ *
+ * <p>Without unique fields, writes use Firestore's single-document operations. With unique fields,
+ * the entity and its reservations are written in one transaction. A value already owned by the
+ * same entity is allowed; another owner's value rejects the entire write. Updates release changed
+ * previous values, and deletion releases the deleted entity's reservations.
+ *
+ * <p>Collections start empty and all writes must use the same reservation protocol and canonical
+ * field mappings. Writes perform no initialization, collection scan, or legacy-data migration.
+ * Previously stored unique values are read directly from the persisted fields on update/delete.
+ * All writers must follow this reservation protocol; direct privileged writes can bypass it.
+ *
+ * <p>Database failures complete returned futures exceptionally. Null arguments, mapping failures,
+ * and local SDK validation may throw synchronously. This repository does not own or close the
+ * supplied {@link Firestore} client. Existing storage names are preserved for compatibility.
+ *
+ * @param <E>  the domain entity type
+ * @param <ID> the entity identifier type; its String representation must be a single document ID,
+ *             never a relative path containing slashes
  */
-public abstract class FirestoreRepositoryV2<
-        E extends Entidade<ID>,
-        ID extends Serializable,
-        D extends EntityDocument<E>>
+public abstract class AbstractFirestoreRepository<E extends Entidade<ID>, ID extends Serializable, P>
         implements Repository<E, ID> {
 
     /**
@@ -54,16 +80,14 @@ public abstract class FirestoreRepositoryV2<
 
     private final String scope;
     private final Set<String> uniqueFields;
-    private final EntityDocumentMapper<E, D> documentMapper;
 
     /**
      * Creates a repository without unique-field constraints.
+     *
+     * @param collection the non-null entity collection
      */
-    private final Class<D> documentType;
-
-    protected FirestoreRepositoryV2(CollectionReference collection, Class<D> documentType,
-                                    EntityDocumentMapper<E, D> documentMapper) {
-        this(collection, documentType, uniqueFields(documentType), documentMapper);
+    protected AbstractFirestoreRepository(CollectionReference collection) {
+        this(collection, Set.of());
     }
 
     /**
@@ -73,10 +97,8 @@ public abstract class FirestoreRepositoryV2<
      * @param collection   the root collection or subcollection managed by this repository
      * @param uniqueFields required canonical String fields, unique within this collection
      */
-    protected FirestoreRepositoryV2(CollectionReference collection, Class<D> documentType, Set<String> uniqueFields,
-                                    EntityDocumentMapper<E, D> documentMapper) {
-        this(collection, Objects.requireNonNull(collection, "Collection must not be null").getPath(), documentType,
-                uniqueFields, documentMapper);
+    protected AbstractFirestoreRepository(CollectionReference collection, Set<String> uniqueFields) {
+        this(collection, Objects.requireNonNull(collection, "Collection must not be null").getPath(), uniqueFields);
     }
 
     /**
@@ -88,63 +110,28 @@ public abstract class FirestoreRepositoryV2<
      *
      * @param collection   the non-null entity collection
      * @param scope        the non-blank uniqueness namespace
-     * @param uniqueFields required String fields, using the names produced by {@code entityToMap}
+     * @param uniqueFields required canonical String fields in the persisted representation
      * @throws IllegalArgumentException if the scope or a reservation key component is blank
      * @throws NullPointerException     if an argument or a field name is null
      */
-    protected FirestoreRepositoryV2(CollectionReference collection, String scope, Class<D> documentType,
-                                    Set<String> uniqueFields, EntityDocumentMapper<E, D> documentMapper) {
+    protected AbstractFirestoreRepository(CollectionReference collection, String scope, Set<String> uniqueFields) {
         this.collection = Objects.requireNonNull(collection, "Collection must not be null");
         this.db = collection.getFirestore();
-        this.documentType = Objects.requireNonNull(documentType, "Document type must not be null");
-        this.documentMapper = Objects.requireNonNull(documentMapper, "Document mapper must not be null");
         this.scope = Objects.requireNonNull(scope, "Scope must not be null");
         if (scope.isBlank()) {
             throw new IllegalArgumentException("Scope must not be blank");
         }
-        this.uniqueFields = union(uniqueFields(documentType), uniqueFields);
+        this.uniqueFields = Set.copyOf(Objects.requireNonNull(uniqueFields, "Unique fields must not be null"));
         for (String field : this.uniqueFields) {
             if (field.isBlank()) throw new IllegalArgumentException("Unique field names must not be blank");
         }
-    }
-
-    private static Set<String> uniqueFields(Class<?> documentType) {
-        Objects.requireNonNull(documentType, "Document type must not be null");
-        Set<String> fields = new HashSet<>();
-        if (documentType.isRecord()) {
-            for (RecordComponent component : documentType.getRecordComponents()) {
-                if (component.isAnnotationPresent(Unique.class)) fields.add(component.getName());
-            }
-        }
-        for (Class<?> type = documentType; type != null && type != Object.class; type = type.getSuperclass()) {
-            for (var field : type.getDeclaredFields()) {
-                if (!java.lang.reflect.Modifier.isStatic(field.getModifiers()) && field.isAnnotationPresent(Unique.class)) {
-                    fields.add(field.getName());
-                }
-            }
-            for (var method : type.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(Unique.class) && method.getParameterCount() == 0) {
-                    String name = method.getName();
-                    if (name.startsWith("get") && name.length() > 3)
-                        name = Character.toLowerCase(name.charAt(3)) + name.substring(4);
-                    fields.add(name);
-                }
-            }
-        }
-        return Set.copyOf(fields);
-    }
-
-    private static Set<String> union(Set<String> annotated, Set<String> configured) {
-        Set<String> result = new HashSet<>(annotated);
-        result.addAll(Objects.requireNonNull(configured, "Unique fields must not be null"));
-        return Set.copyOf(result);
     }
 
     /**
      * Creates a new entity, rejecting an existing ID or another entity's unique values.
      *
      * @param entity the validated entity to create
-     * @return a future containing an independent reconstruction of the captured entity data
+     * @return a future containing the same entity instance supplied to this method
      * @see #duplicateValueException(String)
      */
     public final CompletableFuture<E> create(E entity) {
@@ -158,7 +145,7 @@ public abstract class FirestoreRepositoryV2<
      * nor its reservations changes. Fields absent from the mapping are removed from the document.
      *
      * @param entity the validated entity to save
-     * @return a future containing an independent reconstruction of the captured entity data
+     * @return a future containing the same entity instance supplied to this method
      */
     @Override
     public final CompletableFuture<E> save(E entity) {
@@ -168,7 +155,8 @@ public abstract class FirestoreRepositoryV2<
     private CompletableFuture<E> persist(E entity, boolean createOnly) {
         var captured = capture(entity);
         if (uniqueFields.isEmpty()) {
-            var write = createOnly ? captured.reference().create(captured.data()) : captured.reference().set(captured.data());
+            var write = createOnly ? createDocument(captured.reference(), captured.data())
+                    : setDocument(captured.reference(), captured.data());
             var persisted = toCompletableFuture(write);
             if (createOnly) {
                 persisted = persisted.exceptionallyCompose(error -> CompletableFuture.failedFuture(
@@ -198,9 +186,10 @@ public abstract class FirestoreRepositoryV2<
      * @param <R>     result type
      * @return a future completed only after all writes commit, or exceptionally on failure
      */
-    protected final <R> CompletableFuture<R> writeTransaction(Function<RepositoryWriteTransactionV2, R> planner) {
+    protected final <R> CompletableFuture<R> writeTransaction(
+            Function<RepositoryWriteTransaction, R> planner) {
         Objects.requireNonNull(planner, "Transaction planner must not be null");
-        var writes = new RepositoryWriteTransactionV2(db);
+        var writes = new RepositoryWriteTransaction(db);
         R result;
         try {
             result = planner.apply(writes);
@@ -216,21 +205,15 @@ public abstract class FirestoreRepositoryV2<
         }));
     }
 
-    record CapturedEntity<E>(DocumentReference reference, Map<String, Object> data,
-                             Map<String, String> uniqueValues, E entity) {
+    record CapturedEntity<E, P>(DocumentReference reference, P data,
+                                Map<String, String> uniqueValues, E entity) {
     }
 
-    final CapturedEntity<E> capture(E entity) {
+    final CapturedEntity<E, P> capture(E entity) {
         Objects.requireNonNull(entity, "Entity must not be null");
         var reference = documentReference(entity.getId());
-        String id = reference.getId();
-        D document = Objects.requireNonNull(documentMapper.toDocument(entity), "Document mapper must not return null");
-        Map<String, Object> data = captureDocumentData(document);
-        E result = Objects.requireNonNull(document.toEntity(), "Document mapper must not return null");
-        if (!id.equals(idToStr(result.getId()))) {
-            throw new IllegalArgumentException("Entity mapper must preserve the document ID");
-        }
-        return new CapturedEntity<>(reference, data, extractUniqueValues(data), result);
+        P data = Objects.requireNonNull(captureData(entity), "Captured document must not be null");
+        return new CapturedEntity<>(reference, data, uniqueValuesFromData(data), entity);
     }
 
     final String uniqueScope() {
@@ -261,32 +244,51 @@ public abstract class FirestoreRepositoryV2<
         });
     }
 
-    private Map<String, Object> captureDocumentData(D document) {
-        Map<String, Object> data = new HashMap<>();
-        if (!documentType.isRecord()) throw new IllegalArgumentException("Firestore document type must be a record");
-        for (RecordComponent component : documentType.getRecordComponents()) {
-            if (component.isAnnotationPresent(com.google.cloud.firestore.annotation.DocumentId.class)) continue;
-            try {
-                data.put(component.getName(), component.getAccessor().invoke(document));
-            } catch (IllegalAccessException | InvocationTargetException error) {
-                throw new IllegalStateException("Could not read document field " + component.getName(), error);
-            }
-        }
-        return Collections.unmodifiableMap(data);
+    abstract P captureData(E entity);
+
+    abstract Map<String, String> uniqueValuesFromData(P data);
+
+    abstract Map<String, String> uniqueValuesFromSnapshot(DocumentSnapshot snapshot);
+
+    final Map<String, String> uniqueValuesForSnapshot(DocumentSnapshot snapshot) {
+        return uniqueValuesFromSnapshot(snapshot);
     }
 
     final Map<String, String> extractUniqueValues(Map<String, Object> data) {
         if (uniqueFields.isEmpty()) return Map.of();
         Map<String, String> values = HashMap.newHashMap(uniqueFields.size());
-        uniqueFields.forEach(field -> {
+        for (String field : uniqueFields) {
             if (!(data.get(field) instanceof String value)) {
                 throw new IllegalArgumentException("Unique field " + field + " must be a required String");
             }
             values.put(field, value);
-        });
-        // This map stays private to the persistence flow; no second copy is needed.
+        }
         return values;
     }
+
+    final Map<String, String> extractUniqueValues(DocumentSnapshot snapshot) {
+        return uniqueValuesFromSnapshot(snapshot);
+    }
+
+    final void writeCreate(com.google.cloud.firestore.Transaction transaction,
+                           DocumentReference reference, Object data) {
+        createInTransaction(transaction, reference, data);
+    }
+
+    final void writeSet(com.google.cloud.firestore.Transaction transaction,
+                        DocumentReference reference, Object data) {
+        setInTransaction(transaction, reference, data);
+    }
+
+    abstract ApiFuture<?> createDocument(DocumentReference reference, P data);
+
+    abstract ApiFuture<?> setDocument(DocumentReference reference, P data);
+
+    abstract void createInTransaction(com.google.cloud.firestore.Transaction transaction,
+                                      DocumentReference reference, Object data);
+
+    abstract void setInTransaction(com.google.cloud.firestore.Transaction transaction,
+                                   DocumentReference reference, Object data);
 
     /**
      * Loads an entity from a document reference.
@@ -294,11 +296,11 @@ public abstract class FirestoreRepositoryV2<
      * @param reference the non-null document reference
      * @return the reconstructed entity, or an empty Optional if the document is missing
      */
-    protected CompletableFuture<Optional<E>> get(DocumentReference reference) {
+    protected final CompletableFuture<Optional<E>> get(DocumentReference reference) {
         Objects.requireNonNull(reference, "Document reference must not be null");
         return toCompletableFuture(reference.get())
                 .thenApply(document -> document.exists() ?
-                        Optional.of(documentToEntity(document)) :
+                        Optional.of(mapDocumentToEntity(document)) :
                         Optional.empty());
     }
 
@@ -367,7 +369,7 @@ public abstract class FirestoreRepositoryV2<
             var documents = snapshot.getDocuments();
             int count = Math.min(pageSize, documents.size());
             var items = new ArrayList<E>(count);
-            for (int i = 0; i < count; i++) items.add(documentToEntity(documents.get(i)));
+            for (int i = 0; i < count; i++) items.add(mapDocumentToEntity(documents.get(i)));
             Optional<ID> next = documents.size() > pageSize
                     ? Optional.of(items.getLast().getId()) : Optional.empty();
             return new Page<>(items, next);
@@ -386,12 +388,12 @@ public abstract class FirestoreRepositoryV2<
      * @param query the non-null query; supply ordering when the first result must be predictable
      * @return the first matching entity, or an empty Optional
      */
-    protected CompletableFuture<Optional<E>> queryOne(Query query) {
+    protected final CompletableFuture<Optional<E>> queryOne(Query query) {
         Objects.requireNonNull(query, "Query must not be null");
         return toCompletableFuture(query.limit(1).get())
                 .thenApply(snapshot -> {
                     var documents = snapshot.getDocuments();
-                    return documents.isEmpty() ? Optional.empty() : Optional.of(documentToEntity(documents.getFirst()));
+                    return documents.isEmpty() ? Optional.empty() : Optional.of(mapDocumentToEntity(documents.getFirst()));
                 });
     }
 
@@ -401,8 +403,16 @@ public abstract class FirestoreRepositoryV2<
      * @param snapshot the query result
      * @return the reconstructed entities in query order
      */
-    protected Collection<E> documentsToEntities(QuerySnapshot snapshot) {
-        return snapshot.getDocuments().stream().map(this::documentToEntity).toList();
+    private Collection<E> documentsToEntities(QuerySnapshot snapshot) {
+        return snapshot.getDocuments().stream().map(this::mapDocumentToEntity).toList();
+    }
+
+    private E mapDocumentToEntity(DocumentSnapshot document) {
+        E entity = Objects.requireNonNull(documentToEntity(document), "Document mapper must not return null");
+        if (!document.getId().equals(idToStr(entity.getId()))) {
+            throw new IllegalArgumentException("Document mapper must preserve the document ID");
+        }
+        return entity;
     }
 
     /**
@@ -517,10 +527,7 @@ public abstract class FirestoreRepositoryV2<
      * Reconstructs an existing document through the domain mapper.
      *
      * @param document an existing document snapshot
-     * @return an independent domain entity
+     * @return the domain entity represented by the snapshot
      */
-    protected final E documentToEntity(DocumentSnapshot document) {
-        D dto = Objects.requireNonNull(document.toObject(documentType), "Firestore returned an empty document");
-        return Objects.requireNonNull(dto.toEntity(), "Document mapper must not return null");
-    }
+    protected abstract E documentToEntity(DocumentSnapshot document);
 }

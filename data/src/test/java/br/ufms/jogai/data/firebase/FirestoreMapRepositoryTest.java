@@ -25,10 +25,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Exercita o fluxo sem campos únicos, inclusive IDs String e valores opcionais.
  */
 @EnabledIfEnvironmentVariable(named = "FIRESTORE_EMULATOR_HOST", matches = ".+")
-class FirestoreRepositoryTest {
+class FirestoreMapRepositoryTest {
 
     private Firestore db;
-    private RegistroRepository repository;
+    private RegistroMapRepository repository;
 
     @BeforeEach
     void configurar() {
@@ -36,7 +36,7 @@ class FirestoreRepositoryTest {
                 .setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST"))
                 .build().getService();
-        repository = new RegistroRepository(db);
+        repository = new RegistroMapRepository(db);
     }
 
     @AfterEach
@@ -113,7 +113,7 @@ class FirestoreRepositoryTest {
 
     @Test
     void conjuntoVazioExplicitoTambemDesabilitaUnicidade() throws Exception {
-        RegistroRepository explicito = new RegistroRepository(db, Set.of());
+        RegistroMapRepository explicito = new RegistroMapRepository(db, Set.of());
         aguardar(explicito.create(new Registro("a", "igual")));
         aguardar(explicito.create(new Registro("b", "igual")));
         aguardar(explicito.delete("a"));
@@ -124,7 +124,7 @@ class FirestoreRepositoryTest {
     @Test
     void falhaDePersistenciaNaoEhTraduzidaComoDuplicidade() throws Exception {
         // O servidor rejeita documentos acima do limite de tamanho, sem conflito de ID.
-        FirestoreRepository<Registro, String> invalido = new RegistroRepository(db) {
+        FirestoreMapRepository<Registro, String> invalido = new RegistroMapRepository(db) {
             @Override
             protected Map<String, Object> entityToMap(Registro registro) {
                 return Map.of("valor", registro.valor, "payload", "x".repeat(1_048_577));
@@ -170,12 +170,12 @@ class FirestoreRepositoryTest {
         }
     }
 
-    private static class RegistroRepository extends FirestoreRepository<Registro, String> {
-        RegistroRepository(Firestore db) {
+    private static class RegistroMapRepository extends FirestoreMapRepository<Registro, String> {
+        RegistroMapRepository(Firestore db) {
             super(db.collection("registros"));
         }
 
-        RegistroRepository(Firestore db, Set<String> campos) {
+        RegistroMapRepository(Firestore db, Set<String> campos) {
             super(db.collection("registros"), "registro", campos);
         }
 

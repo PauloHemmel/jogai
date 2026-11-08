@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Executa contra o emulador Firestore, com projeto isolado por teste. */
 @EnabledIfEnvironmentVariable(named = "FIRESTORE_EMULATOR_HOST", matches = ".+")
-class CategoriaFirestoreRepositoryTest {
+class CategoriaFirestoreMapRepositoryTest {
 
     private Firestore db;
-    private CategoriaFirestoreRepository repository;
+    private CategoriaFirestoreMapRepository repository;
 
     @BeforeEach
     void configurar() {
@@ -28,7 +28,7 @@ class CategoriaFirestoreRepositoryTest {
                 .setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST"))
                 .build().getService();
-        repository = new CategoriaFirestoreRepository(db);
+        repository = new CategoriaFirestoreMapRepository(db);
     }
 
     @AfterEach

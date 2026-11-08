@@ -27,13 +27,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProjectedReadsTest {
 
     private Firestore db;
-    private PayloadRepository repository;
+    private PayloadMapRepository repository;
 
     @BeforeEach
     void configure() {
         db = FirestoreOptions.newBuilder().setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST")).build().getService();
-        repository = new PayloadRepository(db);
+        repository = new PayloadMapRepository(db);
     }
 
     @AfterEach
@@ -76,8 +76,8 @@ class ProjectedReadsTest {
         }
     }
 
-    private static final class PayloadRepository extends FirestoreRepository<Payload, String> {
-        private PayloadRepository(Firestore firestore) {
+    private static final class PayloadMapRepository extends FirestoreMapRepository<Payload, String> {
+        private PayloadMapRepository(Firestore firestore) {
             super(firestore.collection("payloads"), Set.of("contact.email"));
         }
 

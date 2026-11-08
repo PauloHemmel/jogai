@@ -1,6 +1,6 @@
 //package br.ufms.jogai.data.datasource;
 //
-//import br.ufms.jogai.data.firebase.FirestoreRepository;
+//import br.ufms.jogai.data.firebase.FirestoreMapRepository;
 //import br.ufms.jogai.data.model.UsuarioDocument;
 //import com.google.cloud.firestore.DocumentSnapshot;
 //
@@ -8,7 +8,7 @@
 //import java.util.Optional;
 //import java.util.concurrent.CompletableFuture;
 //
-//public class UsuarioRepository extends FirestoreRepository<UsuarioDocument, String> {
+//public class UsuarioRepository extends FirestorePojoRepository<Usuario, UUID, UsuarioDocument> {
 //
 //    public UsuarioRepository() {
 //        super(db.collection("usuarios"));

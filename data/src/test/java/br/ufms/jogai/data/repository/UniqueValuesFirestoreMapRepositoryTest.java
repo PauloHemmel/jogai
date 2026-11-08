@@ -18,7 +18,7 @@ import static br.ufms.jogai.data.firebase.UniqueValuesFirestoreRepository.COLLEC
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnabledIfEnvironmentVariable(named = "FIRESTORE_EMULATOR_HOST", matches = ".+")
-class UniqueValuesFirestoreRepositoryTest {
+class UniqueValuesFirestoreMapRepositoryTest {
 
     private Firestore db;
     private UniqueValuesFirestoreRepository valores;

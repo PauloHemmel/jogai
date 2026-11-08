@@ -1,23 +1,22 @@
 package br.ufms.jogai.data.repository;
 
-import br.ufms.jogai.data.firebase.FirestoreRepository;
+import br.ufms.jogai.data.firebase.FirestoreMapRepository;
 import br.ufms.jogai.data.firebase.config.FirebaseConfig;
 import br.ufms.jogai.domain.usuario.*;
 import br.ufms.jogai.domain.shared.Page;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.Timestamp;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class UsuarioFirestoreRepository extends FirestoreRepository<Usuario, UUID> implements UsuarioRepository {
+public class UsuarioFirestoreMapRepository extends FirestoreMapRepository<Usuario, UUID> implements UsuarioRepository {
 
-    public UsuarioFirestoreRepository() {
+    public UsuarioFirestoreMapRepository() {
         this(FirebaseConfig.getFirestore());
     }
 
-    public UsuarioFirestoreRepository(Firestore firestore) {
+    public UsuarioFirestoreMapRepository(Firestore firestore) {
         super(Objects.requireNonNull(firestore).collection("usuarios"), Set.of("email", "telefone"));
     }
 

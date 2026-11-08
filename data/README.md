@@ -20,20 +20,20 @@ entre campos e escopos diferentes. Base64 é reversível, não criptografia.
 
 `UniqueValuesFirestoreRepository` centraliza a construção das chaves, a detecção
 de conflitos e a reserva/liberação de valores. Não depende do domínio de usuário
-nem inicia transações. A classe `FirestoreRepository` centraliza
+nem inicia transações. A classe `FirestoreMapRepository` centraliza
 a persistência e oferece `create`, `save` e `delete`, com unicidade opcional.
 O construtor simples `super(collection)` não configura campos únicos. Nesse
 fluxo, o método genérico `create` usa a operação Firestore `create` e rejeita um ID existente atomicamente; `save`
 usa `set`, e `delete` exclui diretamente, sem ler reservas ou controles.
 Com `super(collection, Set.of(...))`, o repositório mantém documento e
 reservas na mesma transação e usa o caminho completo da coleção como escopo.
-`UsuarioFirestoreRepository` deriva o escopo `usuarios` da coleção raiz, sem
+`UsuarioFirestoreMapRepository` deriva o escopo `usuarios` da coleção raiz, sem
 repetir um escopo manual no construtor. O construtor com escopo explícito continua
 disponível. Cada repositório
 concreto declara somente os nomes dos campos únicos com `Set.of(...)` e
 implementa `entityToMap` e `documentToEntity(DocumentSnapshot)`. Validação e normalização pertencem ao
 domínio; a persistência verifica o tipo dos campos e a exclusividade dos valores. A reconstrução também serve para capturar o resultado
-independente da gravação, sem um método `copiar`. `UsuarioFirestoreRepository` traduz os
+independente da gravação, sem um método `copiar`. `UsuarioFirestoreMapRepository` traduz os
 conflitos em `UsuarioDuplicadoException`.
 
 O guia [Repositórios com valores únicos](docs/repositorios-com-valores-unicos.md)
@@ -92,23 +92,23 @@ no commit. Verificam que cada usuário persistido tem exatamente suas duas reser
 e que operações rejeitadas não deixam reservas órfãs. O componente compartilhado
 também é testado quanto a isolamento de campos/entidades e propriedade das reservas.
 
-O exemplo `CategoriaExemploRepository`, em `src/test/java`, usa a mesma classe
+O exemplo `CategoriaExemploMapRepository`, em `src/test/java`, usa a mesma classe
 base para garantir código único. Seus testes cobrem criação, alteração, exclusão,
 normalização e concorrência.
 
 A classe separada `FirestoreRepositoryComValoresUnicos` foi incorporada ao
-`FirestoreRepository`. Os antigos métodos protegidos de gravação/exclusão bruta
+`FirestoreMapRepository`. Os antigos métodos protegidos de gravação/exclusão bruta
 com `Transaction` foram removidos para não oferecer um atalho que ignorasse as
 reservas. Os repositórios concretos continuam implementando apenas `entityToMap`
 e `documentToEntity(DocumentSnapshot)`.
 
-O teste `FirestoreRepositoryTest` cobre o fluxo sem campos únicos: valores
+O teste `FirestoreMapRepositoryTest` cobre o fluxo sem campos únicos: valores
 repetidos, conflito de ID, concorrência, criação/atualização, consultas, exclusão
 idempotente, captura dos dados mutáveis, campos opcionais nulos e propagação de
 falhas de persistência. Esse fluxo não cria documentos de reserva ou controle.
 
 A API genérica usa inglês: `create` cria documentos novos e
-`duplicateValueException` traduz conflitos. `UsuarioFirestoreRepository.cadastrar`
+`duplicateValueException` traduz conflitos. `UsuarioFirestoreMapRepository.cadastrar`
 é um adaptador do contrato de domínio que delega a `create`. A infraestrutura
 auxiliar usa `UniqueValuesFirestoreRepository` e `DuplicateUniqueValueException`;
 esta última expõe `getField()`. A exceção de domínio continua expondo `getCampo()`.
@@ -156,7 +156,7 @@ Coleções e subcoleções podem participar juntas. O construtor
 como escopo, isolando subcoleções de pais diferentes. IDs devem ser nomes simples,
 sem `/`; o caminho da subcoleção pertence ao `CollectionReference`. Para excluir
 um pai e seus filhos no mesmo commit, planeje explicitamente cada exclusão com
-`writes.delete`. O exemplo `RegistrationExampleRepository` também cria e exclui
+`writes.delete`. O exemplo `RegistrationExampleMapRepository` também cria e exclui
 um usuário e sua categoria em uma subcoleção, com testes de rollback e unicidade.
 
 O plano agora compila os metadados da requisição uma vez e libera os mapas usados

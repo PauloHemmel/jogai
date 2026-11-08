@@ -6,11 +6,12 @@ import br.ufms.jogai.domain.usuario.AvaliacaoMediaUsuario;
 import br.ufms.jogai.domain.usuario.StatusUsuario;
 import br.ufms.jogai.domain.usuario.Usuario;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.annotation.DocumentId;
 
 import java.util.UUID;
 
 public record UsuarioDocument(
-        String id,
+        @DocumentId String id,
         String nome,
         String usuario,
         @Unique String email,

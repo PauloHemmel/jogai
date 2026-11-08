@@ -1,6 +1,6 @@
 package br.ufms.jogai.data.exemplo;
 
-import br.ufms.jogai.data.firebase.FirestoreRepository;
+import br.ufms.jogai.data.firebase.FirestoreMapRepository;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -12,16 +12,16 @@ import java.util.UUID;
 /**
  * Exemplo compilado e exercitado pelos testes de integração.
  */
-public final class CategoriaExemploRepository extends FirestoreRepository<CategoriaExemplo, UUID> {
+public final class CategoriaExemploMapRepository extends FirestoreMapRepository<CategoriaExemplo, UUID> {
 
-    public CategoriaExemploRepository(Firestore firestore) {
+    public CategoriaExemploMapRepository(Firestore firestore) {
         super(firestore.collection("categorias_exemplo"), Set.of("codigo"));
     }
 
     /**
      * Configura uma coleção ou subcoleção, com código único dentro do caminho completo.
      */
-    public CategoriaExemploRepository(CollectionReference collection) {
+    public CategoriaExemploMapRepository(CollectionReference collection) {
         super(collection, Set.of("codigo"));
     }
 

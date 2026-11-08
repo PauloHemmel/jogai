@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CategoriaExemploRepositoryTest {
 
     private Firestore db;
-    private CategoriaExemploRepository repository;
+    private CategoriaExemploMapRepository repository;
 
     @BeforeEach
     void configurar() {
@@ -29,7 +29,7 @@ class CategoriaExemploRepositoryTest {
                 .setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST"))
                 .build().getService();
-        repository = new CategoriaExemploRepository(db);
+        repository = new CategoriaExemploMapRepository(db);
     }
 
     @AfterEach

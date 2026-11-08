@@ -1,9 +1,7 @@
 package br.ufms.jogai.data.firebase;
 
-import br.ufms.jogai.data.exemplo.CategoriaExemplo;
-import br.ufms.jogai.data.exemplo.CategoriaExemploRepository;
-import br.ufms.jogai.data.exemplo.RegistrationExampleRepository;
-import br.ufms.jogai.data.repository.UsuarioFirestoreRepository;
+import br.ufms.jogai.data.exemplo.*;
+import br.ufms.jogai.data.repository.UsuarioFirestoreMapRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import com.google.cloud.firestore.Firestore;
@@ -47,14 +45,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class RepositoryWriteTransactionTest {
 
     private Firestore db;
-    private RegistrationExampleRepository users;
-    private CategoriaExemploRepository categories;
+    private RegistrationExampleMapRepository users;
+    private CategoriaExemploMapRepository categories;
 
     @BeforeEach
     void configure() throws Exception {
         db = connection();
-        users = new RegistrationExampleRepository(db);
-        categories = new CategoriaExemploRepository(db);
+        users = new RegistrationExampleMapRepository(db);
+        categories = new CategoriaExemploMapRepository(db);
     }
 
     private Firestore connection() {
@@ -198,7 +196,7 @@ class RepositoryWriteTransactionTest {
 
     @Test
     void serverCommitFailureRollsBackBothCollectionsAndInitialization() throws Exception {
-        var invalid = new FirestoreRepository<CategoriaExemplo, UUID>(db.collection("invalid_categories")) {
+        var invalid = new FirestoreMapRepository<CategoriaExemplo, UUID>(db.collection("invalid_categories")) {
             @Override
             protected Map<String, Object> entityToMap(CategoriaExemplo entity) {
                 return Map.of("nome", entity.getNome(), "codigo", entity.getCodigo(), "payload", "x".repeat(1_048_577));
@@ -341,7 +339,7 @@ class RepositoryWriteTransactionTest {
     @Test
     void repositoriesWithDifferentFirestoreClientsCannotShareAPlan() throws Exception {
         try (var other = connection()) {
-            var otherUsers = new UsuarioFirestoreRepository(other);
+            var otherUsers = new UsuarioFirestoreMapRepository(other);
             assertThrows(IllegalArgumentException.class, () -> users.writeTransaction(writes -> {
                 writes.create(users, user("a", 1));
                 return writes.create(otherUsers, user("b", 2));
@@ -367,7 +365,7 @@ class RepositoryWriteTransactionTest {
 
     @Test
     void writeUsesEntityIdAndReadRejectsMapperWithADifferentId() throws Exception {
-        var invalid = new FirestoreRepository<CategoriaExemplo, UUID>(db.collection("invalid_categories")) {
+        var invalid = new FirestoreMapRepository<CategoriaExemplo, UUID>(db.collection("invalid_categories")) {
             @Override
             protected Map<String, Object> entityToMap(CategoriaExemplo entity) {
                 return Map.of("nome", entity.getNome(), "codigo", entity.getCodigo());
@@ -403,8 +401,8 @@ class RepositoryWriteTransactionTest {
         assertEquals(0, db.collection("valores_unicos_controle").get().get().size());
     }
 
-    private FirestoreRepository<CategoriaExemplo, UUID> categoryRepository(String collection, String scope, boolean unique) {
-        return new FirestoreRepository<>(db.collection(collection), scope, unique ? java.util.Set.of("codigo") : java.util.Set.of()) {
+    private FirestoreMapRepository<CategoriaExemplo, UUID> categoryRepository(String collection, String scope, boolean unique) {
+        return new FirestoreMapRepository<>(db.collection(collection), scope, unique ? java.util.Set.of("codigo") : java.util.Set.of()) {
             @Override
             protected Map<String, Object> entityToMap(CategoriaExemplo entity) {
                 return Map.of("nome", entity.getNome(), "codigo", entity.getCodigo());

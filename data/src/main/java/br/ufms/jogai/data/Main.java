@@ -1,6 +1,6 @@
 package br.ufms.jogai.data;
 
-import br.ufms.jogai.data.repository.UsuarioFirestoreRepository;
+import br.ufms.jogai.data.repository.UsuarioFirestoreMapRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
 
 import java.time.LocalDate;
@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Main {
 
-    private static final UsuarioFirestoreRepository repository = new UsuarioFirestoreRepository();
+    private static final UsuarioFirestoreMapRepository repository = new UsuarioFirestoreMapRepository();
     private static final String EMAIL_TESTE = "kleberkruger@gmail.com";
 
     static void main() {

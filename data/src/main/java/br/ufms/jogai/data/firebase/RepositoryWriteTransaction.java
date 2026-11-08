@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 /**
- * A write plan created by {@link FirestoreRepository#writeTransaction}.
+ * A write plan created by {@link AbstractFirestoreRepository#writeTransaction}.
  * Captures data once and creates fresh execution state on each database retry.
  * This object exposes no raw SDK transaction: callers cannot accidentally write before reads
  * or commit reservations separately. At most one mutation per document is accepted.
@@ -27,11 +27,15 @@ import java.util.concurrent.ExecutionException;
  * Sealing compiles stable request metadata once and releases builder-only maps. Database retries
  * reuse only this metadata; snapshots and ownership decisions are always reconstructed.
  */
-public final class RepositoryWriteTransaction {
-    private enum Kind {CREATE, SAVE, DELETE}
+public class RepositoryWriteTransaction {
+    private enum Kind {
+        CREATE,
+        SAVE,
+        DELETE
+    }
 
-    private record Mutation(FirestoreRepository<?, ?> repository, DocumentReference reference,
-                            Kind kind, Map<String, Object> data, Map<String, String> values) {
+    private record Mutation(AbstractFirestoreRepository<?, ?, ?> repository, DocumentReference reference,
+                            Kind kind, Object data, Map<String, String> values) {
     }
 
     private record Configuration(String scope, java.util.Set<String> fields) {
@@ -65,7 +69,8 @@ public final class RepositoryWriteTransaction {
      * @param <ID>       identifier type
      * @return independent captured entity, also suitable for the plan's result
      */
-    public <E extends Entidade<ID>, ID extends Serializable> E create(FirestoreRepository<E, ID> repository, E entity) {
+    public <E extends Entidade<ID>, ID extends Serializable, P> E create(
+            AbstractFirestoreRepository<E, ID, P> repository, E entity) {
         checkOpen();
         return addCaptured(repository, repository.capture(entity), true);
     }
@@ -79,12 +84,14 @@ public final class RepositoryWriteTransaction {
      * @param <ID>       identifier type
      * @return independent captured entity
      */
-    public <E extends Entidade<ID>, ID extends Serializable> E save(FirestoreRepository<E, ID> repository, E entity) {
+    public <E extends Entidade<ID>, ID extends Serializable, P> E save(
+            AbstractFirestoreRepository<E, ID, P> repository, E entity) {
         checkOpen();
         return addCaptured(repository, repository.capture(entity), false);
     }
 
-    <E> E addCaptured(FirestoreRepository<?, ?> repository, FirestoreRepository.CapturedEntity<E> captured, boolean createOnly) {
+    <E, P> E addCaptured(AbstractFirestoreRepository<?, ?, ?> repository,
+                         AbstractFirestoreRepository.CapturedEntity<E, P> captured, boolean createOnly) {
         add(new Mutation(repository, captured.reference(), createOnly ? Kind.CREATE : Kind.SAVE,
                 captured.data(), captured.uniqueValues()));
         return captured.entity();
@@ -98,7 +105,8 @@ public final class RepositoryWriteTransaction {
      * @param <E>        entity type
      * @param <ID>       identifier type
      */
-    public <E extends Entidade<ID>, ID extends Serializable> void delete(FirestoreRepository<E, ID> repository, ID id) {
+    public <E extends Entidade<ID>, ID extends Serializable, P> void delete(
+            AbstractFirestoreRepository<E, ID, P> repository, ID id) {
         checkOpen();
         add(new Mutation(repository, repository.documentReference(id), Kind.DELETE, Map.of(), Map.of()));
     }
@@ -196,8 +204,8 @@ public final class RepositoryWriteTransaction {
         if (plan.hasUniqueFields()) applyUniqueChanges(transaction, documents);
         for (var mutation : plan.mutations()) {
             switch (mutation.kind()) {
-                case CREATE -> transaction.create(mutation.reference(), mutation.data());
-                case SAVE -> transaction.set(mutation.reference(), mutation.data());
+                case CREATE -> mutation.repository().writeCreate(transaction, mutation.reference(), mutation.data());
+                case SAVE -> mutation.repository().writeSet(transaction, mutation.reference(), mutation.data());
                 case DELETE -> {
                     if (mutation.repository().uniqueFields().isEmpty() || documents.get(mutation.reference()).exists()) {
                         transaction.delete(mutation.reference());
@@ -215,7 +223,7 @@ public final class RepositoryWriteTransaction {
             var repository = mutation.repository();
             var previous = documents.get(mutation.reference());
             if (!repository.uniqueFields().isEmpty() && previous.exists()) {
-                var previousValues = repository.extractUniqueValues(previous.getData());
+                var previousValues = repository.extractUniqueValues(previous);
                 // This private map is mutable. Unchanged claims still get their transactional
                 // ownership check below, without scheduling a release only to cancel it later.
                 previousValues.entrySet().removeIf(field -> field.getValue().equals(mutation.values().get(field.getKey())));

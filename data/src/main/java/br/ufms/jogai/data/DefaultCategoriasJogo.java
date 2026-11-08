@@ -1,6 +1,6 @@
 package br.ufms.jogai.data;
 
-import br.ufms.jogai.data.repository.CategoriaFirestoreRepository;
+import br.ufms.jogai.data.repository.CategoriaFirestoreMapRepository;
 import br.ufms.jogai.domain.jogo.CategoriaJogo;
 import br.ufms.jogai.domain.jogo.CategoriaRepository;
 
@@ -29,7 +29,7 @@ public class DefaultCategoriasJogo {
     }
 
     public static void main(String[] args) throws Exception {
-        new DefaultCategoriasJogo(new CategoriaFirestoreRepository()).executar();
+        new DefaultCategoriasJogo(new CategoriaFirestoreMapRepository()).executar();
         System.out.println("Categorias padrão inseridas ou já existentes.");
     }
 }

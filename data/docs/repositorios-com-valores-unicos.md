@@ -1,7 +1,7 @@
 # Repositórios com valores únicos
 
 A unicidade fica declarada no repositório concreto. A classe base
-`FirestoreRepository<E, ID>` executa as transações e delega a
+`AbstractFirestoreRepository<E, ID, P>` executa as transações e delega a
 verificação e a manutenção das reservas ao `UniqueValuesFirestoreRepository`.
 Nenhum service precisa calcular chaves ou manter reservas.
 
@@ -14,7 +14,8 @@ super(firestore.collection("usuarios"), Set.of("email", "telefone"));
 Os argumentos são a coleção dos documentos e o conjunto de nomes dos campos
 únicos. O escopo é derivado de `collection.getPath()`; para os usuários na raiz,
 ele é `usuarios`. Os nomes dos campos devem coincidir com os campos
-persistidos por `entityToMap`. Cada campo é único independentemente dos demais.
+persistidos por `entityToMap` no repositório Map ou pelos componentes do record
+no repositório POJO. Cada campo é único independentemente dos demais.
 Valores iguais em escopos ou campos distintos não colidem.
 
 Para usar automaticamente o caminho completo da coleção como escopo, prefira
@@ -76,7 +77,7 @@ mapeamento e o resultado independente da entidade original são iguais nos dois
 fluxos.
 
 A classe `FirestoreRepositoryComValoresUnicos` foi removida. O nome genérico
-`FirestoreRepository` é usado tanto com quanto sem configuração de unicidade.
+`FirestoreMapRepository` é usado tanto com quanto sem configuração de unicidade.
 Os métodos públicos de gravação são finais e os antigos auxiliares protegidos
 que gravavam/excluíam diretamente em uma transação foram retirados.
 
@@ -135,7 +136,7 @@ public final class CategoriaExemplo extends Entidade<UUID> {
 ```java
 package br.ufms.jogai.data.exemplo;
 
-import br.ufms.jogai.data.firebase.FirestoreRepository;
+import br.ufms.jogai.data.firebase.FirestoreMapRepository;
 import com.google.cloud.firestore.Firestore;
 
 import java.util.Map;
@@ -143,7 +144,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Exemplo compilado e exercitado pelos testes de integração. */
-public final class CategoriaExemploRepository extends FirestoreRepository<CategoriaExemplo, UUID> {
+public final class CategoriaExemploMapRepository extends FirestoreMapRepository<CategoriaExemplo, UUID> {
 
     public CategoriaExemploRepository(Firestore firestore) {
         super(firestore.collection("categorias_exemplo"), "categoria_exemplo",
@@ -170,7 +171,7 @@ public final class CategoriaExemploRepository extends FirestoreRepository<Catego
 ```
 
 O repositório não implementa manualmente `create`, `save` nem `delete`:
-esses métodos finais são herdados da classe base. Eles são finais para evitar
+esses métodos finais são herdados da base comum. Eles são finais para evitar
 substituir acidentalmente a persistência protegida por uma gravação simples.
 `get`, `getPage` e os métodos auxiliares de consultas limitadas estão disponíveis.
 
@@ -293,7 +294,7 @@ public CompletableFuture<Usuario> cadastrar(Usuario usuario) {
 }
 ```
 
-O Javadoc de `FirestoreRepository` está em inglês e descreve os contratos de
+O Javadoc de `FirestoreMapRepository` está em inglês e descreve os contratos de
 mapeamento, os modos de persistência, as transações, os erros assíncronos, as
 conversões temporais e a paginação. Pode ser
 gerado com `./gradlew :data:javadoc`.

@@ -1,6 +1,6 @@
 # Atomic multi-document repository writes
 
-`FirestoreRepository.writeTransaction` lets a child repository combine mutations
+`FirestoreMapRepository.writeTransaction` lets a child repository combine mutations
 from one or more repositories in one Firestore transaction. It preserves the
 shared unique-value protocol instead of exposing raw transaction writes that
 could bypass reservations.
@@ -11,7 +11,7 @@ readiness markers, or legacy-data scans. See [Pagination](pagination.md).
 
 ## Concrete user example
 
-`UsuarioFirestoreRepository.cadastrarTodos` is a production example, also exposed
+`UsuarioFirestoreMapRepository.cadastrarTodos` is a production example, also exposed
 by the domain's `UsuarioRepository` contract:
 
 ```java
@@ -27,7 +27,7 @@ public CompletableFuture<Collection<Usuario>> cadastrarTodos(Collection<Usuario>
 Usage:
 
 ```java
-UsuarioRepository users = new UsuarioFirestoreRepository(firestore);
+UsuarioRepository users = new UsuarioFirestoreMapRepository(firestore);
 users.cadastrarTodos(List.of(firstUser, secondUser))
         .thenAccept(created -> System.out.println("Created: " + created.size()));
 ```
@@ -53,7 +53,7 @@ mapper must provide the intended full document.
 
 ## Multiple repositories
 
-The compiled example `RegistrationExampleRepository`, in
+The compiled example `RegistrationExampleMapRepository`, in
 `data/src/test/java/br/ufms/jogai/data/exemplo`, extends the user repository and
 combines a user with a category:
 

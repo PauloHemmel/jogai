@@ -26,13 +26,16 @@ public final class UniqueValuesFirestoreRepository {
     private static final Base64.Encoder KEY_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final FieldMask OWNER_MASK = FieldMask.of("entidadeId");
 
-    /** Shared collection name for persistence code and integration tests. */
+    /**
+     * Shared collection name for persistence code and integration tests.
+     */
     public static final String COLLECTION_PATH = "_uniqueValues_";
 
     private final CollectionReference collection;
 
     /**
      * Creates a reservation repository without reading or writing any documents.
+     *
      * @param firestore the application-owned Firestore client
      */
     public UniqueValuesFirestoreRepository(Firestore firestore) {
@@ -41,6 +44,7 @@ public final class UniqueValuesFirestoreRepository {
 
     /**
      * Creates attempt-local reservation state for a caller-owned transaction.
+     *
      * @param transaction the transaction that will commit all related writes
      * @return a fresh operation that must not be shared across retry attempts
      */
@@ -85,16 +89,17 @@ public final class UniqueValuesFirestoreRepository {
          * Checks all new values before preparing the release of changed previous values.
          * Uncached reservation documents are fetched together inside the transaction, returning
          * only their owner field. Missing documents and missing owner fields remain distinguishable.
-         * @param scope the unique namespace
-         * @param entityId the reservation owner's ID
+         *
+         * @param scope          the unique namespace
+         * @param entityId       the reservation owner's ID
          * @param previousValues previously persisted canonical values
-         * @param currentValues desired canonical values; empty when deleting an entity
-         * @throws ExecutionException if a database read fails
-         * @throws InterruptedException if a database read is interrupted
+         * @param currentValues  desired canonical values; empty when deleting an entity
+         * @throws ExecutionException            if a database read fails
+         * @throws InterruptedException          if a database read is interrupted
          * @throws DuplicateUniqueValueException if a value belongs to another entity
          */
         public void replace(String scope, String entityId,
-                               Map<String, String> previousValues, Map<String, String> currentValues)
+                            Map<String, String> previousValues, Map<String, String> currentValues)
                 throws ExecutionException, InterruptedException {
             checkNotApplied();
             Objects.requireNonNull(entityId);
@@ -125,14 +130,15 @@ public final class UniqueValuesFirestoreRepository {
 
         /**
          * Checks persisted and pending ownership, then schedules a reservation in memory.
-         * @param scope the unique namespace
-         * @param field the constrained field name
-         * @param value the canonical value, already validated and normalized by the domain
+         *
+         * @param scope    the unique namespace
+         * @param field    the constrained field name
+         * @param value    the canonical value, already validated and normalized by the domain
          * @param entityId the reservation owner's ID
-         * @throws ExecutionException if a database read fails
-         * @throws InterruptedException if a database read is interrupted
+         * @throws ExecutionException            if a database read fails
+         * @throws InterruptedException          if a database read is interrupted
          * @throws DuplicateUniqueValueException if another owner occupies the value
-         * @throws IllegalStateException if writes have already been applied
+         * @throws IllegalStateException         if writes have already been applied
          */
         public void reserve(String scope, String field, String value, String entityId)
                 throws ExecutionException, InterruptedException {
@@ -159,12 +165,13 @@ public final class UniqueValuesFirestoreRepository {
 
         /**
          * Schedules release only if the supplied entity owns the persisted or pending reservation.
-         * @param scope the unique namespace
-         * @param field the constrained field name
-         * @param value the previous canonical value
+         *
+         * @param scope    the unique namespace
+         * @param field    the constrained field name
+         * @param value    the previous canonical value
          * @param entityId the reservation owner's ID
-         * @throws ExecutionException if a database read fails
-         * @throws InterruptedException if a database read is interrupted
+         * @throws ExecutionException    if a database read fails
+         * @throws InterruptedException  if a database read is interrupted
          * @throws IllegalStateException if writes have already been applied
          */
         public void release(String scope, String field, String value, String entityId)
@@ -198,6 +205,7 @@ public final class UniqueValuesFirestoreRepository {
         /**
          * Schedules the final writes on the supplied transaction; this method does not commit.
          * After this call, the caller must not attempt further reads in the transaction.
+         *
          * @throws IllegalStateException if this operation has already been applied
          */
         public void apply() {

@@ -11,7 +11,7 @@ primeira operação, mantendo documentos e reservas no mesmo commit.
 um cursor opcional:
 
 ```java
-var users = new UsuarioFirestoreRepository(firestore);
+var users = new UsuarioFirestoreMapRepository(firestore);
 var first = users.getPage(50).get();
 for (var user : first.items()) {
     System.out.println(user.getNome());

@@ -26,13 +26,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class RepositoryPaginationTest {
 
     private Firestore db;
-    private ItemRepository repository;
+    private ItemMapRepository repository;
 
     @BeforeEach
     void configure() {
         db = FirestoreOptions.newBuilder().setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST")).build().getService();
-        repository = new ItemRepository(db);
+        repository = new ItemMapRepository(db);
     }
 
     @AfterEach
@@ -57,7 +57,7 @@ class RepositoryPaginationTest {
 
     @Test
     void getAllIncludesMoreThanOneMaximumPageAndDoesNotTraverseSubcollections() throws Exception {
-        int count = FirestoreRepository.MAX_PAGE_SIZE + 3;
+        int count = FirestoreMapRepository.MAX_PAGE_SIZE + 3;
         await(repository.writeTransaction(writes -> {
             for (int i = 0; i < count; i++) {
                 writes.create(repository, new Item("item-" + i, "Name " + i, "A"));
@@ -72,8 +72,8 @@ class RepositoryPaginationTest {
         assertEquals(count, ids.size());
         for (int i = 0; i < count; i++) assertTrue(ids.contains("item-" + i));
         assertFalse(ids.contains("nested"));
-        var page = await(repository.getPage(FirestoreRepository.MAX_PAGE_SIZE));
-        assertEquals(FirestoreRepository.MAX_PAGE_SIZE, page.items().size());
+        var page = await(repository.getPage(FirestoreMapRepository.MAX_PAGE_SIZE));
+        assertEquals(FirestoreMapRepository.MAX_PAGE_SIZE, page.items().size());
         assertTrue(page.nextCursor().isPresent());
     }
 
@@ -138,11 +138,11 @@ class RepositoryPaginationTest {
 
     @Test
     void invalidLimitsFailAndEmptyPagesHaveNoCursor() throws Exception {
-        for (int limit : new int[]{0, -1, FirestoreRepository.MAX_PAGE_SIZE + 1}) {
+        for (int limit : new int[]{0, -1, FirestoreMapRepository.MAX_PAGE_SIZE + 1}) {
             assertThrows(IllegalArgumentException.class, () -> repository.getPage(limit));
             assertThrows(IllegalArgumentException.class, () -> repository.byGroup("A", limit, null));
         }
-        var page = await(repository.getPage(FirestoreRepository.MAX_PAGE_SIZE));
+        var page = await(repository.getPage(FirestoreMapRepository.MAX_PAGE_SIZE));
         assertTrue(page.items().isEmpty());
         assertTrue(page.nextCursor().isEmpty());
     }
@@ -161,10 +161,10 @@ class RepositoryPaginationTest {
         }
     }
 
-    private static final class ItemRepository extends FirestoreRepository<Item, String> {
+    private static final class ItemMapRepository extends FirestoreMapRepository<Item, String> {
         private final AtomicInteger mappings = new AtomicInteger();
 
-        private ItemRepository(Firestore firestore) {
+        private ItemMapRepository(Firestore firestore) {
             super(firestore.collection("items"));
         }
 

@@ -1,10 +1,10 @@
 package br.ufms.jogai.data.firebase;
 
+import br.ufms.jogai.data.exemplo.RegistrationExampleMapRepository;
 import br.ufms.jogai.domain.shared.Entidade;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.data.exemplo.CategoriaExemplo;
-import br.ufms.jogai.data.exemplo.CategoriaExemploRepository;
-import br.ufms.jogai.data.exemplo.RegistrationExampleRepository;
+import br.ufms.jogai.data.exemplo.CategoriaExemploMapRepository;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -34,16 +34,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class SubcollectionTransactionTest {
 
     private Firestore db;
-    private ItemRepository roots, members, otherMembers, notes;
+    private ItemMapRepository roots, members, otherMembers, notes;
 
     @BeforeEach
     void configure() {
         db = FirestoreOptions.newBuilder().setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST")).build().getService();
-        roots = new ItemRepository(db.collection("groups"));
-        members = new ItemRepository(db.collection("groups").document("group").collection("members"));
-        otherMembers = new ItemRepository(db.collection("groups").document("other").collection("members"));
-        notes = new ItemRepository(members.collection.document("member").collection("notes"));
+        roots = new ItemMapRepository(db.collection("groups"));
+        members = new ItemMapRepository(db.collection("groups").document("group").collection("members"));
+        otherMembers = new ItemMapRepository(db.collection("groups").document("other").collection("members"));
+        notes = new ItemMapRepository(members.collection.document("member").collection("notes"));
     }
 
     @AfterEach
@@ -79,10 +79,10 @@ class SubcollectionTransactionTest {
 
     @Test
     void registrationExampleCreatesAndDeletesUserAndNestedCategoryTogether() throws Exception {
-        var users = new RegistrationExampleRepository(db);
+        var users = new RegistrationExampleMapRepository(db);
         var user = Usuario.create("Pessoa Exemplo", "pessoa_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
                 "person@example.com", "67996122809", LocalDate.of(1990, 1, 1));
-        var categories = new CategoriaExemploRepository(db.collection("usuarios").document(user.getId().toString())
+        var categories = new CategoriaExemploMapRepository(db.collection("usuarios").document(user.getId().toString())
                 .collection("categorias"));
         var category = new CategoriaExemplo(UUID.randomUUID(), "Jogos de Tabuleiro", "EST");
         await(users.register(user, categories, category));
@@ -240,8 +240,8 @@ class SubcollectionTransactionTest {
         }
     }
 
-    private static final class ItemRepository extends FirestoreRepository<Item, String> {
-        private ItemRepository(CollectionReference collection) {
+    private static final class ItemMapRepository extends FirestoreMapRepository<Item, String> {
+        private ItemMapRepository(CollectionReference collection) {
             super(collection, java.util.Set.of("value"));
         }
 

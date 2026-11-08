@@ -1,6 +1,6 @@
 package br.ufms.jogai.data.repository;
 
-import br.ufms.jogai.data.firebase.FirestoreRepositoryV2;
+import br.ufms.jogai.data.firebase.FirestorePojoRepository;
 import br.ufms.jogai.data.firebase.config.FirebaseConfig;
 import br.ufms.jogai.data.model.UsuarioDocument;
 import br.ufms.jogai.domain.shared.Page;
@@ -18,18 +18,18 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public class UsuarioFirestoreRepositoryV2 extends FirestoreRepositoryV2<Usuario, UUID, UsuarioDocument>
+public class UsuarioFirestorePojoRepository extends FirestorePojoRepository<Usuario, UUID, UsuarioDocument>
         implements UsuarioRepository {
 
-    public UsuarioFirestoreRepositoryV2() {
+    public UsuarioFirestorePojoRepository() {
         this(FirebaseConfig.getFirestore());
     }
 
-    public UsuarioFirestoreRepositoryV2(Firestore firestore) {
+    public UsuarioFirestorePojoRepository(Firestore firestore) {
         this(Objects.requireNonNull(firestore, "Firestore must not be null").collection("usuarios"));
     }
 
-    public UsuarioFirestoreRepositoryV2(CollectionReference collection) {
+    public UsuarioFirestorePojoRepository(CollectionReference collection) {
         super(collection, UsuarioDocument.class, UsuarioDocument::new);
     }
 

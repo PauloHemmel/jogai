@@ -1,6 +1,6 @@
 package br.ufms.jogai.data.firebase;
 
-import br.ufms.jogai.data.repository.UsuarioFirestoreRepository;
+import br.ufms.jogai.data.repository.UsuarioFirestoreMapRepository;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
 import com.google.cloud.firestore.Firestore;
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -31,13 +30,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class CleanDatabaseRepositoryTest {
 
     private Firestore db;
-    private CountingRepository repository;
+    private CountingMapRepository repository;
 
     @BeforeEach
     void configure() {
         db = FirestoreOptions.newBuilder().setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST")).build().getService();
-        repository = new CountingRepository(db);
+        repository = new CountingMapRepository(db);
     }
 
     @AfterEach
@@ -67,7 +66,7 @@ class CleanDatabaseRepositoryTest {
         var claimants = new ArrayList<Usuario>();
         for (int i = 0; i < 8; i++) {
             // Separate repository instances share no local initialization or ownership cache.
-            var writer = new UsuarioFirestoreRepository(db);
+            var writer = new UsuarioFirestoreMapRepository(db);
             var claimant = user("shared", "6799612280" + i);
             claimants.add(claimant);
             results.add(writer.create(claimant).handle((created, error) -> error));
@@ -126,10 +125,10 @@ class CleanDatabaseRepositoryTest {
         return result.get(60, TimeUnit.SECONDS);
     }
 
-    private static final class CountingRepository extends UsuarioFirestoreRepository {
+    private static final class CountingMapRepository extends UsuarioFirestoreMapRepository {
         private final AtomicInteger reconstructions = new AtomicInteger();
 
-        private CountingRepository(Firestore firestore) {
+        private CountingMapRepository(Firestore firestore) {
             super(firestore);
         }
 

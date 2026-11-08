@@ -1,25 +1,24 @@
 package br.ufms.jogai.data.repository;
 
-import br.ufms.jogai.data.firebase.FirestoreRepository;
+import br.ufms.jogai.data.firebase.FirestoreMapRepository;
 import br.ufms.jogai.data.firebase.config.FirebaseConfig;
 import br.ufms.jogai.domain.jogo.CategoriaJogo;
 import br.ufms.jogai.domain.jogo.CategoriaRepository;
 import br.ufms.jogai.domain.shared.Page;
-import br.ufms.jogai.domain.util.Validar;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class CategoriaFirestoreRepository extends FirestoreRepository<CategoriaJogo, String>
+public class CategoriaFirestoreMapRepository extends FirestoreMapRepository<CategoriaJogo, String>
         implements CategoriaRepository {
 
-    public CategoriaFirestoreRepository() {
+    public CategoriaFirestoreMapRepository() {
         this(FirebaseConfig.getFirestore());
     }
 
-    public CategoriaFirestoreRepository(Firestore firestore) {
+    public CategoriaFirestoreMapRepository(Firestore firestore) {
         super(Objects.requireNonNull(firestore).collection("categoriasJogo"), Set.of("nome"));
     }
 

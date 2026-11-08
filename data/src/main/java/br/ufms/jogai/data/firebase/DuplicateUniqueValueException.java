@@ -9,6 +9,7 @@ public class DuplicateUniqueValueException extends RuntimeException {
 
     /**
      * Describes a conflict on one unique field or the reserved ID name.
+     *
      * @param field the conflicting field name
      */
     public DuplicateUniqueValueException(String field) {
@@ -16,7 +17,9 @@ public class DuplicateUniqueValueException extends RuntimeException {
         this.field = field;
     }
 
-    /** @return the conflicting field name, or {@code "id"} for an existing entity ID */
+    /**
+     * @return the conflicting field name, or {@code "id"} for an existing entity ID
+     */
     public String getField() {
         return field;
     }

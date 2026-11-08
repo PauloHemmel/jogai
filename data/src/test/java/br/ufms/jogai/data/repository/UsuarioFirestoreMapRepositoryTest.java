@@ -25,10 +25,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Executa apenas no emulador, com um projeto isolado por teste e sem credenciais reais.
  */
 @EnabledIfEnvironmentVariable(named = "FIRESTORE_EMULATOR_HOST", matches = ".+")
-class UsuarioFirestoreRepositoryTest {
+class UsuarioFirestoreMapRepositoryTest {
 
     private Firestore db;
-    private UsuarioFirestoreRepository repository;
+    private UsuarioFirestoreMapRepository repository;
 
     @BeforeEach
     void configurar() {
@@ -36,7 +36,7 @@ class UsuarioFirestoreRepositoryTest {
                 .setProjectId("demo-jogai-" + UUID.randomUUID().toString().substring(0, 8))
                 .setEmulatorHost(System.getenv("FIRESTORE_EMULATOR_HOST"))
                 .build().getService();
-        repository = new UsuarioFirestoreRepository(db);
+        repository = new UsuarioFirestoreMapRepository(db);
     }
 
     @AfterEach
