@@ -248,9 +248,7 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
 
     private Map<String, Object> captureEntityData(E entity) {
         Map<String, Object> data = Objects.requireNonNull(entityToMap(entity), "Entity data must not be null");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> captured = (Map<String, Object>) copyFirestoreValue(data, new IdentityHashMap<>());
-        return captured;
+        return copyFirestoreMap(data, new IdentityHashMap<>());
     }
 
     private static Object copyFirestoreValue(Object value, IdentityHashMap<Object, Boolean> active) {
@@ -259,18 +257,17 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
                 return null;
             }
             case Map<?, ?> map -> {
-                enterContainer(value, active);
-                Map<Object, Object> copy = new HashMap<>(map.size());
-                map.forEach((key, nested) -> copy.put(key, copyFirestoreValue(nested, active)));
-                active.remove(value);
-                return Collections.unmodifiableMap(copy);
+                return copyFirestoreMap(map, active);
             }
             case List<?> list -> {
                 enterContainer(value, active);
-                List<Object> copy = new ArrayList<>(list.size());
-                for (Object nested : list) copy.add(copyFirestoreValue(nested, active));
-                active.remove(value);
-                return Collections.unmodifiableList(copy);
+                try {
+                    List<Object> copy = new ArrayList<>(list.size());
+                    for (Object nested : list) copy.add(copyFirestoreValue(nested, active));
+                    return Collections.unmodifiableList(copy);
+                } finally {
+                    active.remove(value);
+                }
             }
             case byte[] bytes -> {
                 return bytes.clone();
@@ -282,6 +279,23 @@ public abstract class FirestoreRepository<E extends Entidade<ID>, ID extends Ser
             }
         }
         return value;
+    }
+
+    private static Map<String, Object> copyFirestoreMap(Map<?, ?> source,
+                                                         IdentityHashMap<Object, Boolean> active) {
+        enterContainer(source, active);
+        try {
+            Map<String, Object> copy = new HashMap<>(source.size());
+            source.forEach((key, value) -> {
+                if (!(key instanceof String field)) {
+                    throw new IllegalArgumentException("Firestore map keys must be strings");
+                }
+                copy.put(field, copyFirestoreValue(value, active));
+            });
+            return Collections.unmodifiableMap(copy);
+        } finally {
+            active.remove(source);
+        }
     }
 
     private static void enterContainer(Object value, IdentityHashMap<Object, Boolean> active) {
