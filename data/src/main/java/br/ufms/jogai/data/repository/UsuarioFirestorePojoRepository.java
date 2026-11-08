@@ -8,8 +8,6 @@ import br.ufms.jogai.domain.usuario.StatusUsuario;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.UsuarioRepository;
 import br.ufms.jogai.domain.usuario.UsuarioDuplicadoException;
-import br.ufms.jogai.domain.util.Validar;
-import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
 
 import java.util.Objects;
@@ -26,11 +24,8 @@ public class UsuarioFirestorePojoRepository extends FirestorePojoRepository<Usua
     }
 
     public UsuarioFirestorePojoRepository(Firestore firestore) {
-        this(Objects.requireNonNull(firestore, "Firestore must not be null").collection("usuarios"));
-    }
-
-    public UsuarioFirestorePojoRepository(CollectionReference collection) {
-        super(collection, UsuarioDocument.class, UsuarioDocument::new);
+        Objects.requireNonNull(firestore, "O cliente firestore não pode ser nulo");
+        super(firestore.collection("usuarios"), UsuarioDocument.class, UsuarioDocument::new);
     }
 
     /**
@@ -62,21 +57,21 @@ public class UsuarioFirestorePojoRepository extends FirestorePojoRepository<Usua
     public CompletableFuture<Optional<Usuario>> buscarPorUsuario(String usuario) {
         Objects.requireNonNull(usuario);
 
-        return queryOne(collection.whereEqualTo("usuario", Validar.usuario(usuario)));
+        return queryOne(collection.whereEqualTo("usuario", usuario));
     }
 
     @Override
     public CompletableFuture<Optional<Usuario>> buscarPorEmail(String email) {
         Objects.requireNonNull(email);
 
-        return queryOne(collection.whereEqualTo("email", Validar.email(email)));
+        return queryOne(collection.whereEqualTo("email", email));
     }
 
     @Override
     public CompletableFuture<Optional<Usuario>> buscarPorTelefone(String telefone) {
         Objects.requireNonNull(telefone);
 
-        return queryOne(collection.whereEqualTo("telefone", Validar.telefone(telefone)));
+        return queryOne(collection.whereEqualTo("telefone", telefone));
     }
 
     @Override

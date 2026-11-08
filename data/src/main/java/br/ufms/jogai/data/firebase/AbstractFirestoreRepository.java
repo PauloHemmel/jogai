@@ -8,13 +8,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.FieldPath;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.*;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -66,7 +60,7 @@ public abstract class AbstractFirestoreRepository<E extends Entidade<ID>, ID ext
     /**
      * Maximum number of entities returned by a page.
      */
-    public static final int MAX_PAGE_SIZE = 200;
+    protected static final int MAX_PAGE_SIZE = 200;
 
     /**
      * Shared Firestore client owned by the application.
@@ -205,8 +199,9 @@ public abstract class AbstractFirestoreRepository<E extends Entidade<ID>, ID ext
         }));
     }
 
-    record CapturedEntity<E, P>(DocumentReference reference, P data,
-                                Map<String, String> uniqueValues, E entity) {
+    record CapturedEntity<E, P>(
+            DocumentReference reference, P data,
+            Map<String, String> uniqueValues, E entity) {
     }
 
     final CapturedEntity<E, P> capture(E entity) {
@@ -250,10 +245,6 @@ public abstract class AbstractFirestoreRepository<E extends Entidade<ID>, ID ext
 
     abstract Map<String, String> uniqueValuesFromSnapshot(DocumentSnapshot snapshot);
 
-    final Map<String, String> uniqueValuesForSnapshot(DocumentSnapshot snapshot) {
-        return uniqueValuesFromSnapshot(snapshot);
-    }
-
     final Map<String, String> extractUniqueValues(Map<String, Object> data) {
         if (uniqueFields.isEmpty()) return Map.of();
         Map<String, String> values = HashMap.newHashMap(uniqueFields.size());
@@ -270,13 +261,11 @@ public abstract class AbstractFirestoreRepository<E extends Entidade<ID>, ID ext
         return uniqueValuesFromSnapshot(snapshot);
     }
 
-    final void writeCreate(com.google.cloud.firestore.Transaction transaction,
-                           DocumentReference reference, Object data) {
+    final void writeCreate(Transaction transaction, DocumentReference reference, Object data) {
         createInTransaction(transaction, reference, data);
     }
 
-    final void writeSet(com.google.cloud.firestore.Transaction transaction,
-                        DocumentReference reference, Object data) {
+    final void writeSet(Transaction transaction, DocumentReference reference, Object data) {
         setInTransaction(transaction, reference, data);
     }
 
@@ -284,11 +273,10 @@ public abstract class AbstractFirestoreRepository<E extends Entidade<ID>, ID ext
 
     abstract ApiFuture<?> setDocument(DocumentReference reference, P data);
 
-    abstract void createInTransaction(com.google.cloud.firestore.Transaction transaction,
+    abstract void createInTransaction(Transaction transaction,
                                       DocumentReference reference, Object data);
 
-    abstract void setInTransaction(com.google.cloud.firestore.Transaction transaction,
-                                   DocumentReference reference, Object data);
+    abstract void setInTransaction(Transaction transaction, DocumentReference reference, Object data);
 
     /**
      * Loads an entity from a document reference.

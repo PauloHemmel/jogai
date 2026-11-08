@@ -17,8 +17,6 @@ import java.util.Set;
 public abstract class FirestoreMapRepository<E extends Entidade<ID>, ID extends Serializable>
         extends AbstractFirestoreRepository<E, ID, Map<String, Object>> {
 
-    public static final int MAX_PAGE_SIZE = AbstractFirestoreRepository.MAX_PAGE_SIZE;
-
     protected FirestoreMapRepository(CollectionReference collection) {
         super(collection);
     }

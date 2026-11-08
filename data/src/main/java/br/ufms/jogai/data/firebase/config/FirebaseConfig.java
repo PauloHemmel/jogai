@@ -10,11 +10,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
-/** Lazily initializes the application-owned Firestore client from a classpath resource. */
+/**
+ * Lazily initializes the application-owned Firestore client from a classpath resource.
+ */
 public final class FirebaseConfig {
     private static final String SERVICE_ACCOUNT_PATH = "serviceAccountKey.json";
 
-    private FirebaseConfig() {}
+    private FirebaseConfig() {
+    }
 
     private static final class Holder {
         private static final Firestore FIRESTORE = initializeFirestore();
@@ -38,7 +41,9 @@ public final class FirebaseConfig {
         return resource;
     }
 
-    /** @return the lazily initialized shared client; the application owns its shutdown */
+    /**
+     * @return the lazily initialized shared client; the application owns its shutdown
+     */
     public static Firestore getFirestore() {
         return Holder.FIRESTORE;
     }

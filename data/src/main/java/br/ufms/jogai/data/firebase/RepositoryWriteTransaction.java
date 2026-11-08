@@ -243,7 +243,5 @@ public class RepositoryWriteTransaction {
         }
         // No SDK reads are allowed after this point.
         reservations.apply();
-
     }
-
 }

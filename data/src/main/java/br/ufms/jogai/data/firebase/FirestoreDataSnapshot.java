@@ -16,6 +16,7 @@ import java.lang.reflect.RecordComponent;
  * Creates an immutable snapshot of the mutable Firestore containers supported by the repositories.
  */
 final class FirestoreDataSnapshot {
+
     private FirestoreDataSnapshot() {
     }
 

@@ -84,6 +84,19 @@ class UsuarioFirestorePojoRepositoryTest {
     }
 
     @Test
+    void searchMethodsQueryExactlyTheCanonicalValuesSuppliedByTheCallingLayer() throws Exception {
+        Usuario user = usuario("canonical@example.com", "67996122812");
+        await(repository.create(user));
+
+        assertEquals(user.getId(), await(repository.buscarPorEmail("canonical@example.com")).orElseThrow().getId());
+        assertEquals(user.getId(), await(repository.buscarPorTelefone("67996122812")).orElseThrow().getId());
+        assertEquals(user.getId(), await(repository.buscarPorUsuario(user.getUsuario())).orElseThrow().getId());
+        assertTrue(await(repository.buscarPorEmail(" CANONICAL@example.com ")).isEmpty());
+        assertTrue(await(repository.buscarPorTelefone("(67) 99612-2812")).isEmpty());
+        assertTrue(await(repository.buscarPorUsuario(" " + user.getUsuario() + " ")).isEmpty());
+    }
+
+    @Test
     void sharesStringReservationsWithTheExistingRepository() throws Exception {
         UsuarioFirestoreMapRepository existingRepository = new UsuarioFirestoreMapRepository(db);
         await(existingRepository.create(usuario("shared@example.com", "67996122804")));

@@ -12,6 +12,7 @@ import com.google.cloud.firestore.Transaction;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.RecordComponent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,14 +29,13 @@ public abstract class FirestorePojoRepository<
         D extends EntityDocument<E>
         > extends AbstractFirestoreRepository<E, ID, D> {
 
-    public static final int MAX_PAGE_SIZE = AbstractFirestoreRepository.MAX_PAGE_SIZE;
-
     private final Class<D> documentType;
     private final EntityDocumentMapper<E, D> documentMapper;
+    private final Map<String, Method> uniqueAccessors;
 
     protected FirestorePojoRepository(CollectionReference collection, Class<D> documentType,
                                       EntityDocumentMapper<E, D> documentMapper) {
-        this(collection, documentType, uniqueFields(documentType), documentMapper);
+        this(collection, documentType, Set.of(), documentMapper);
     }
 
     protected FirestorePojoRepository(CollectionReference collection, Class<D> documentType,
@@ -52,6 +52,7 @@ public abstract class FirestorePojoRepository<
             throw new IllegalArgumentException("Firestore V2 document type must be a record");
         }
         this.documentMapper = Objects.requireNonNull(documentMapper, "Document mapper must not be null");
+        this.uniqueAccessors = resolveUniqueAccessors(documentType, uniqueFields());
     }
 
     private static Set<String> uniqueFields(Class<?> documentType) {
@@ -86,6 +87,26 @@ public abstract class FirestorePojoRepository<
         return Set.copyOf(result);
     }
 
+    private static Map<String, Method> resolveUniqueAccessors(Class<?> documentType, Set<String> uniqueFields) {
+        if (uniqueFields.isEmpty()) return Map.of();
+        Map<String, Method> accessors = HashMap.newHashMap(uniqueFields.size());
+        for (RecordComponent component : documentType.getRecordComponents()) {
+            if (uniqueFields.contains(component.getName())) {
+                Method accessor = component.getAccessor();
+                if (!accessor.trySetAccessible()) {
+                    throw new IllegalArgumentException("Unique field accessor is not accessible: " + component.getName());
+                }
+                accessors.put(component.getName(), accessor);
+            }
+        }
+        if (accessors.size() != uniqueFields.size()) {
+            Set<String> unresolved = new HashSet<>(uniqueFields);
+            unresolved.removeAll(accessors.keySet());
+            throw new IllegalArgumentException("Unique fields must be document record components: " + unresolved);
+        }
+        return Map.copyOf(accessors);
+    }
+
     @Override
     D captureData(E entity) {
         D document = Objects.requireNonNull(documentMapper.toDocument(entity), "Document mapper must not return null");
@@ -96,21 +117,9 @@ public abstract class FirestorePojoRepository<
     Map<String, String> uniqueValuesFromData(D document) {
         if (uniqueFields().isEmpty()) return Map.of();
         Map<String, String> values = HashMap.newHashMap(uniqueFields().size());
-        Map<String, RecordComponent> components = new HashMap<>();
-        for (RecordComponent component : documentType.getRecordComponents()) {
-            components.put(component.getName(), component);
-        }
         for (String field : uniqueFields()) {
-            RecordComponent component = components.get(field);
-            if (component == null) {
-                throw new IllegalArgumentException("Unique field " + field + " is not a document component");
-            }
             try {
-                var accessor = component.getAccessor();
-                if (!accessor.canAccess(document) && !accessor.trySetAccessible()) {
-                    throw new IllegalAccessException("Record component accessor is not accessible");
-                }
-                Object value = accessor.invoke(document);
+                Object value = uniqueAccessors.get(field).invoke(document);
                 if (!(value instanceof String string)) {
                     throw new IllegalArgumentException("Unique field " + field + " must be a required String");
                 }
@@ -125,8 +134,15 @@ public abstract class FirestorePojoRepository<
     @Override
     Map<String, String> uniqueValuesFromSnapshot(DocumentSnapshot snapshot) {
         if (uniqueFields().isEmpty()) return Map.of();
-        D document = Objects.requireNonNull(snapshot.toObject(documentType), "Firestore returned an empty document");
-        return uniqueValuesFromData(document);
+        Map<String, String> values = HashMap.newHashMap(uniqueFields().size());
+        for (String field : uniqueFields()) {
+            String value = snapshot.getString(field);
+            if (value == null) {
+                throw new IllegalArgumentException("Unique field " + field + " must be a required String");
+            }
+            values.put(field, value);
+        }
+        return values;
     }
 
     @Override

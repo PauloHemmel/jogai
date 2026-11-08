@@ -17,7 +17,8 @@ public class UsuarioFirestoreMapRepository extends FirestoreMapRepository<Usuari
     }
 
     public UsuarioFirestoreMapRepository(Firestore firestore) {
-        super(Objects.requireNonNull(firestore).collection("usuarios"), Set.of("email", "telefone"));
+        Objects.requireNonNull(firestore, "O cliente firestore não pode ser nulo");
+        super(firestore.collection("usuarios"), Set.of("email", "telefone"));
     }
 
     /**
