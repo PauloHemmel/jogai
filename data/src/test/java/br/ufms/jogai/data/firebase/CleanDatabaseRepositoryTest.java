@@ -77,7 +77,7 @@ class CleanDatabaseRepositoryTest {
             if (error == null) winners++;
             else {
                 while (error.getCause() != null) error = error.getCause();
-                if (!(error instanceof UsuarioDuplicadoException)) {
+                if (!(error instanceof DuplicateUniqueValueException)) {
                     // Heavy contention may exhaust SDK retries; no failed transaction may leak writes.
                     var code = Status.fromThrowable(error).getCode();
                     assertTrue(code == Status.Code.ABORTED || code == Status.Code.DEADLINE_EXCEEDED,
@@ -87,7 +87,7 @@ class CleanDatabaseRepositoryTest {
                     assertNotNull(error, "A retry must not create a second owner of the shared email");
                     while (error.getCause() != null) error = error.getCause();
                 }
-                assertEquals("email", assertInstanceOf(UsuarioDuplicadoException.class, error).getCampo());
+                assertEquals("email", assertInstanceOf(DuplicateUniqueValueException.class, error).getField());
             }
         }
         assertEquals(1, winners);

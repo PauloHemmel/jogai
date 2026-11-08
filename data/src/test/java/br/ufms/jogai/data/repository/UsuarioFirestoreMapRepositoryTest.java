@@ -1,6 +1,8 @@
 package br.ufms.jogai.data.repository;
 
+import br.ufms.jogai.data.firebase.DuplicateUniqueValueException;
 import br.ufms.jogai.data.firebase.UniqueValuesFirestoreRepository;
+import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.usuario.Usuario;
 import br.ufms.jogai.domain.usuario.StatusUsuario;
 import br.ufms.jogai.domain.util.Validar;
@@ -17,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static br.ufms.jogai.data.firebase.UniqueValuesFirestoreRepository.COLLECTION_PATH;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -153,10 +154,10 @@ class UsuarioFirestoreMapRepositoryTest {
         for (var resultado : resultados) {
             Throwable erro = aguardar(resultado);
             if (erro == null) concluidos++;
-            else assertEquals("email", assertInstanceOf(UsuarioDuplicadoException.class, causa(erro)).getCampo());
+            else assertEquals("email", assertInstanceOf(DuplicateUniqueValueException.class, causa(erro)).getField());
         }
         assertEquals(1, concluidos);
-        assertEquals(1, aguardar(repository.getPage(100).thenApply(page -> page.items())).size());
+        assertEquals(1, aguardar(repository.getPage(100).thenApply(Page::items)).size());
         assertReservasConsistentes();
     }
 
@@ -207,17 +208,17 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario usuario = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(usuario));
+                (usuario));
         usuario.setEmail("b@example.com");
         usuario.setTelefone("67996122810");
         aguardar(repository.save(usuario));
         aguardar(repository.create
 
-(usuario("a@example.com", "67996122809")));
+                (usuario("a@example.com", "67996122809")));
         assertEquals(2, aguardar(repository.getPage(100).thenApply(page -> page.items())).size());
         duplicado("email", repository.create
 
-(usuario("b@example.com", "67996122811")));
+                (usuario("b@example.com", "67996122811")));
     }
 
     @Test
@@ -226,20 +227,20 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario segundo = usuario("b@example.com", "67996122810");
         aguardar(repository.create
 
-(primeiro));
+                (primeiro));
         aguardar(repository.create
 
-(segundo));
+                (segundo));
         segundo.setEmail(primeiro.getEmail());
         segundo.setTelefone("67996122811");
         duplicado("email", repository.save(segundo));
         assertEquals("b@example.com", aguardar(repository.get(segundo.getId())).orElseThrow().getEmail());
         duplicado("telefone", repository.create
 
-(usuario("c@example.com", "67996122810")));
+                (usuario("c@example.com", "67996122810")));
         aguardar(repository.create
 
-(usuario("c@example.com", "67996122811")));
+                (usuario("c@example.com", "67996122811")));
     }
 
     @Test
@@ -247,14 +248,14 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario usuario = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(usuario));
+                (usuario));
         aguardar(repository.delete(usuario.getId()));
         aguardar(repository.delete(usuario.getId()));
         assertEquals(0, quantidadeReservas("email"));
         assertEquals(0, quantidadeReservas("telefone"));
         aguardar(repository.create
 
-(usuario("a@example.com", "67996122809")));
+                (usuario("a@example.com", "67996122809")));
     }
 
     @Test
@@ -262,7 +263,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario a = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(a));
+                (a));
         assertEquals(a.getId(), aguardar(repository.buscarPorEmail(Validar.email(" A@Example.com "))).orElseThrow().getId());
         assertEquals(a.getId(), aguardar(repository.buscarPorTelefone(Validar.telefone("(67) 99612-2809"))).orElseThrow().getId());
         assertTrue(aguardar(repository.buscarPorEmail(" A@Example.com ")).isEmpty());
@@ -274,7 +275,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario inicial = usuario("inicial@example.com", "67996122811");
         aguardar(repository.create
 
-(inicial));
+                (inicial));
         aguardar(repository.delete(inicial.getId()));
         verificarConcorrencia("email",
                 usuario("a@example.com", "67996122809"),
@@ -301,10 +302,10 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario b = usuario("b@example.com", "67996122810");
         aguardar(repository.create
 
-(a));
+                (a));
         aguardar(repository.create
 
-(b));
+                (b));
         b.setEmail("novo@example.com");
         b.setTelefone(a.getTelefone());
         duplicado("telefone", repository.save(b));
@@ -314,13 +315,13 @@ class UsuarioFirestoreMapRepositoryTest {
         assertReservasConsistentes();
         aguardar(repository.create
 
-(usuario("novo@example.com", "67996122811")));
+                (usuario("novo@example.com", "67996122811")));
         duplicado("email", repository.create
 
-(usuario("b@example.com", "67996122812")));
+                (usuario("b@example.com", "67996122812")));
         duplicado("telefone", repository.create
 
-(usuario("livre@example.com", "67996122810")));
+                (usuario("livre@example.com", "67996122810")));
     }
 
     @Test
@@ -328,7 +329,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario a = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(a));
+                (a));
         a.setEmail("novo@example.com");
         aguardar(repository.save(a));
         assertReservasConsistentes();
@@ -342,7 +343,7 @@ class UsuarioFirestoreMapRepositoryTest {
         assertReservasConsistentes();
         aguardar(repository.create
 
-(usuario("a@example.com", "67996122809")));
+                (usuario("a@example.com", "67996122809")));
     }
 
     @Test
@@ -360,10 +361,10 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario b = usuario("b@example.com", "67996122810");
         aguardar(repository.create
 
-(a));
+                (a));
         aguardar(repository.create
 
-(b));
+                (b));
         if (campo.equals("email")) {
             a.setEmail("disputa@example.com");
             b.setEmail("disputa@example.com");
@@ -383,12 +384,12 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario existente = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(existente));
+                (existente));
         existente.setEmail("disputa@example.com");
         var alteracao = repository.save(existente).handle((usuario, erro) -> erro);
         var cadastro = repository.create
 
-(usuario("disputa@example.com", "67996122810"))
+                        (usuario("disputa@example.com", "67996122810"))
                 .handle((usuario, erro) -> erro);
         apenasUmVencedor("email", aguardar(alteracao), aguardar(cadastro));
         assertReservasConsistentes();
@@ -399,7 +400,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario a = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(a));
+                (a));
         Usuario b = aguardar(repository.get(a.getId())).orElseThrow();
         a.setEmail("primeiro@example.com");
         a.setTelefone("67996122810");
@@ -418,7 +419,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario a = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(a));
+                (a));
         var valores = new UniqueValuesFirestoreRepository(db);
         var falha = db.runTransaction(transaction -> {
             var reservas = valores.inTransaction(transaction);
@@ -434,7 +435,7 @@ class UsuarioFirestoreMapRepositoryTest {
         assertReservasConsistentes();
         aguardar(repository.create
 
-(usuario("novo@example.com", "67996122810")));
+                (usuario("novo@example.com", "67996122810")));
     }
 
     @Test
@@ -442,7 +443,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario a = usuario("a@example.com", "67996122809");
         aguardar(repository.create
 
-(a));
+                (a));
         var valores = new UniqueValuesFirestoreRepository(db);
         var falha = db.runTransaction(transaction -> {
             var reservas = valores.inTransaction(transaction);
@@ -459,7 +460,7 @@ class UsuarioFirestoreMapRepositoryTest {
         assertReservasConsistentes();
         aguardar(repository.create
 
-(usuario("novo@example.com", "67996122810")));
+                (usuario("novo@example.com", "67996122810")));
     }
 
     @Test
@@ -467,7 +468,7 @@ class UsuarioFirestoreMapRepositoryTest {
         Usuario a = usuario("a@example.com", "67996122809");
         var cadastro = repository.create
 
-(a);
+                (a);
         a.setEmail("outro@example.com");
         a.setTelefone("67996122810");
         Usuario resultado = aguardar(cadastro);
@@ -507,17 +508,17 @@ class UsuarioFirestoreMapRepositoryTest {
 
     private static void apenasUmVencedor(String campo, Throwable erroA, Throwable erroB) {
         assertNotEquals(erroA == null, erroB == null, "Exatamente uma operação deve concluir");
-        assertEquals(campo, assertInstanceOf(UsuarioDuplicadoException.class,
-                causa(erroA != null ? erroA : erroB)).getCampo());
+        assertEquals(campo, assertInstanceOf(DuplicateUniqueValueException.class,
+                causa(erroA != null ? erroA : erroB)).getField());
     }
 
     private void verificarConcorrencia(String campo, Usuario a, Usuario b) throws Exception {
         var primeiro = repository.create
 
-(a);
+                (a);
         var segundo = repository.create
 
-(b);
+                (b);
         var resultadoA = primeiro.handle((usuario, erro) -> erro);
         var resultadoB = segundo.handle((usuario, erro) -> erro);
         Throwable erroA = aguardar(resultadoA);
@@ -540,11 +541,11 @@ class UsuarioFirestoreMapRepositoryTest {
 
     private static void duplicado(String campo, CompletableFuture<?> future) {
         Exception erro = assertThrows(Exception.class, () -> aguardar(future));
-        assertEquals(campo, assertInstanceOf(UsuarioDuplicadoException.class, causa(erro)).getCampo());
+        assertEquals(campo, assertInstanceOf(DuplicateUniqueValueException.class, causa(erro)).getField());
     }
 
     private static Throwable causa(Throwable erro) {
-        while (erro.getCause() != null && !(erro instanceof UsuarioDuplicadoException)) erro = erro.getCause();
+        while (erro.getCause() != null && !(erro instanceof DuplicateUniqueValueException)) erro = erro.getCause();
         return erro;
     }
 }

@@ -30,11 +30,6 @@ public class UsuarioFirestoreMapRepository extends FirestoreMapRepository<Usuari
     }
 
     @Override
-    protected RuntimeException duplicateValueException(String campo) {
-        return new UsuarioDuplicadoException(campo);
-    }
-
-    @Override
     protected Map<String, Object> entityToMap(Usuario entity) {
         return Map.of(
                 "nome", entity.getNome(),

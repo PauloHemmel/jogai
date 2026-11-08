@@ -1,5 +1,6 @@
 package br.ufms.jogai.data.repository;
 
+import br.ufms.jogai.data.firebase.DuplicateUniqueValueException;
 import br.ufms.jogai.data.model.UsuarioDocument;
 import br.ufms.jogai.data.firebase.FirestorePojoRepository;
 import br.ufms.jogai.data.model.shared.EntityDocument;
@@ -74,12 +75,12 @@ class UsuarioFirestorePojoRepositoryTest {
     @Test
     void preservesUniqueEmailConstraint() throws Exception {
         await(repository.create(usuario("same@example.com", "67996122802")));
-        UsuarioDuplicadoException error = assertInstanceOf(
-                UsuarioDuplicadoException.class,
+        DuplicateUniqueValueException error = assertInstanceOf(
+                DuplicateUniqueValueException.class,
                 usuarioException(assertThrows(Exception.class,
                         () -> await(repository.create(usuario("same@example.com", "67996122803")))))
         );
-        assertEquals("email", error.getCampo());
+        assertEquals("email", error.getField());
     }
 
     @Test
@@ -100,12 +101,12 @@ class UsuarioFirestorePojoRepositoryTest {
         UsuarioFirestoreMapRepository existingRepository = new UsuarioFirestoreMapRepository(db);
         await(existingRepository.create(usuario("shared@example.com", "67996122804")));
 
-        UsuarioDuplicadoException error = assertInstanceOf(
-                UsuarioDuplicadoException.class,
+        DuplicateUniqueValueException error = assertInstanceOf(
+                DuplicateUniqueValueException.class,
                 usuarioException(assertThrows(Exception.class,
                         () -> await(repository.create(usuario("shared@example.com", "67996122805")))))
         );
-        assertEquals("email", error.getCampo());
+        assertEquals("email", error.getField());
     }
 
     @Test
@@ -184,7 +185,7 @@ class UsuarioFirestorePojoRepositoryTest {
     }
 
     private static Throwable usuarioException(Throwable error) {
-        while (error.getCause() != null && !(error instanceof UsuarioDuplicadoException)) {
+        while (error.getCause() != null && !(error instanceof DuplicateUniqueValueException)) {
             error = error.getCause();
         }
         return error;

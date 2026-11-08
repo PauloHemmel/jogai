@@ -2,6 +2,7 @@ package br.ufms.jogai.data.firebase;
 
 import br.ufms.jogai.data.exemplo.*;
 import br.ufms.jogai.data.repository.UsuarioFirestoreMapRepository;
+import br.ufms.jogai.domain.shared.Page;
 import br.ufms.jogai.domain.usuario.Usuario;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -34,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static br.ufms.jogai.data.firebase.UniqueValuesFirestoreRepository.COLLECTION_PATH;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -432,11 +432,11 @@ class RepositoryWriteTransactionTest {
         for (int i = 0; i < errors.size(); i++) {
             if (errors.get(i) == null) winners++;
             else
-                assertEquals("email", assertInstanceOf(UsuarioDuplicadoException.class, cause(errors.get(i))).getCampo());
+                assertEquals("email", assertInstanceOf(DuplicateUniqueValueException.class, cause(errors.get(i))).getField());
             assertEquals(errors.get(i) == null, await(users.get(companions.get(i).getId())).isPresent());
         }
         assertEquals(1, winners);
-        assertEquals(2, await(users.getPage(100).thenApply(page -> page.items())).size());
+        assertEquals(2, await(users.getPage(100).thenApply(Page::items)).size());
         assertConsistent();
     }
 
@@ -477,8 +477,8 @@ class RepositoryWriteTransactionTest {
             return null;
         }), () -> users.cadastrarTodos(List.of(user("a", 1), user("b", 2)))));
         assertNull(results.get(0));
-        if (results.get(1) != null) assertInstanceOf(UsuarioDuplicadoException.class, cause(results.get(1)));
-        assertEquals(results.get(1) == null ? 2 : 0, await(users.getPage(100).thenApply(page -> page.items())).size());
+        if (results.get(1) != null) assertInstanceOf(DuplicateUniqueValueException.class, cause(results.get(1)));
+        assertEquals(results.get(1) == null ? 2 : 0, await(users.getPage(100).thenApply(Page::items)).size());
         assertConsistent();
     }
 
@@ -616,12 +616,12 @@ class RepositoryWriteTransactionTest {
     }
 
     private static Throwable cause(Throwable error) {
-        while (error.getCause() != null && !(error instanceof UsuarioDuplicadoException)) error = error.getCause();
+        while (error.getCause() != null && !(error instanceof DuplicateUniqueValueException)) error = error.getCause();
         return error;
     }
 
     private static void conflict(String field, CompletableFuture<?> result) {
         var error = assertThrows(ExecutionException.class, () -> await(result));
-        assertEquals(field, assertInstanceOf(UsuarioDuplicadoException.class, cause(error)).getCampo());
+        assertEquals(field, assertInstanceOf(DuplicateUniqueValueException.class, cause(error)).getField());
     }
 }
