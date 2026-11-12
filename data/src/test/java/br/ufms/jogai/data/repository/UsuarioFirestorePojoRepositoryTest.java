@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -66,7 +67,9 @@ class UsuarioFirestorePojoRepositoryTest {
         assertEquals(usuario.getId().toString(), document.id());
         assertEquals(usuario.getId(), created.getId());
         assertEquals(usuario.getDataNascimento(), document.toEntity().getDataNascimento());
-        assertEquals(usuario.getDataCadastro(), document.toEntity().getDataCadastro());
+        // O Firestore armazena instantes com precisão de microssegundos.
+        assertEquals(usuario.getDataCadastro().truncatedTo(ChronoUnit.MICROS),
+                document.toEntity().getDataCadastro());
 
         Usuario loaded = await(repository.get(usuario.getId())).orElseThrow();
         assertEquals(usuario.getEmail(), loaded.getEmail());

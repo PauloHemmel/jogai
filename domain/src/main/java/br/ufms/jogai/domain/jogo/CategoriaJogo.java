@@ -71,7 +71,8 @@ public class CategoriaJogo extends Entidade<String> {
     }
 
     public static CategoriaJogo create(String nome, String descricao) {
-        return new CategoriaJogo(gerarTag(nome), nome, descricao);
+        String nomeValidado = Validar.nomeCategoriaJogo(nome);
+        return new CategoriaJogo(gerarTag(nomeValidado), nomeValidado, descricao);
     }
 
     public static CategoriaJogo reconstitute(String tag, String nome, String descricao) {

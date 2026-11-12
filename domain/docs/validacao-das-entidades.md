@@ -8,7 +8,30 @@ Escopo: subclasses de `br.ufms.jogai.domain.shared.Entidade` e objetos de valor 
 ./gradlew :domain:test
 ```
 
-Resultado após a ampliação: **1.430 casos aprovados, nenhuma falha e nenhum ignorado**. A auditoria inicial tinha 139 casos, com 58 falhas; após as correções, a suíte tinha 153 casos. Foram adicionados outros 1.277 casos de fronteiras, entradas malformadas e integridade das referências. O teste de nascimento nulo foi atualizado para esperar `IllegalArgumentException` em lugar do `NullPointerException` anterior.
+Registro da etapa anterior de ampliação: **1.430 casos aprovados, nenhuma falha e nenhum ignorado**. A auditoria inicial tinha 139 casos, com 58 falhas; após as correções, a suíte tinha 153 casos. Foram adicionados outros 1.277 casos de fronteiras, entradas malformadas e integridade das referências. O teste de nascimento nulo foi atualizado para esperar `IllegalArgumentException` em lugar do `NullPointerException` anterior.
+
+### Verificação dos repositórios em 11/11/2026
+
+Uma cópia independente do commit `c68dca5`, anterior à implementação dos repositórios,
+foi executada com JDK 25 e revelou **9 falhas em 1.430 testes de domínio**.
+Na primeira verificação da implementação, foram executados **1.443 testes: 1.435
+aprovados e 8 falhas preexistentes**.
+A normalização de Categoria resolveu `JogoValidationTest.aceitaLimitesEOpcionais`.
+
+A correção complementar resolveu as oito falhas: o ano de lançamento passou a
+aceitar somente valores de 1 até o ano atual, a validação temporal passou a verificar
+campos obrigatórios, e os dados de referência e o nome da categoria passaram a
+produzir os erros de validação esperados. Dois testes de email foram alinhados ao
+contrato de `IllegalArgumentException` do validador para entrada nula ou inválida.
+
+**Resultado final: 1.443 testes de domínio aprovados, nenhuma falha e nenhum ignorado**,
+incluindo os 15 testes de Empréstimo.
+
+Na camada de dados, a cópia original apresentou **37 falhas em 116 testes**.
+A versão atual passou nos **144 testes, sem falhas ou testes ignorados**, usando
+o emulador Firestore. O resultado inclui 22 testes de Categoria e 16 de Empréstimo.
+Os relatórios atuais estão em `domain/build/reports/tests/test/index.html` e
+`data/build/reports/tests/test/index.html`.
 
 Relatório: `domain/build/reports/tests/test/index.html`.
 
@@ -24,7 +47,7 @@ Os números contam invocações parametrizadas; cada caso pode ter várias asser
 | `Jogo` | Identidade, nome, editora, lançamento, jogadores, faixa etária, duração, categorias, descrição e ativo; builder, reconstituição, alterações, proteção da coleção e remoção da última categoria. |
 | `CategoriaJogo` | Identidade textual, nome e descrição; criação, reconstituição e setters; limites de comprimento e valores opcionais. |
 | `Exemplar` | Identidade, jogo, proprietário, conservação, observação e cadastro; criação, reconstituição, setters, todos os estados de conservação e integridade das referências. |
-| `Emprestimo` | Identidade nula e preservação da identidade pelo único construtor disponível. Os demais campos ainda não têm API implementada. |
+| `Emprestimo` | Criação e reconstituição, identidade, participantes distintos, prazo, propriedade dos exemplares, itens repetidos, proteção das coleções, cópias históricas e datas efetivas de devolução. |
 
 `NumeroJogadores`, `FaixaEtaria` e `DuracaoPartida` são exercitados diretamente e pelo builder: negativos, zero onde há regra, limites invertidos, extremos de inteiro, valores opcionais, igualdade dos limites e duração negativa em nanossegundos.
 
@@ -55,7 +78,7 @@ A classe `LacunasValidacaoTest` permanece ativa como regressão dos problemas en
 
 ## Limitações do modelo
 
-- `Emprestimo` principal é um esqueleto: proprietário, tomador, datas e itens não têm fluxo implementado; `adicionarItem` permanece vazio. A API precisa ser implementada para testar suas invariantes de negócio.
+- `Emprestimo` implementa o registro e as operações sobre itens. Solicitação, aceite, disponibilidade, avaliações e ocorrências de devolução continuam fora desta entrega. A persistência e os exemplos estão documentados em [Categoria e Empréstimo](../../data/docs/repositorios-categoria-emprestimo.md).
 - Descrições e observações permanecem texto livre opcional, com `trim`; não foram inventados limites novos.
 - Não foram introduzidos tetos para jogadores, faixa etária ou duração, nem idade mínima para cadastro. Duração zero continua aceita pelo contrato atual.
 - A validação não consulta existência ou posse de emails/telefones. O pacote `AI` não foi alterado.

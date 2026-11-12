@@ -388,7 +388,11 @@ public class Validar {
      * @return nome da categoria validado
      */
     public static String nomeCategoriaJogo(String nome) {
-        return nomeCatalogo(nome, "Nome da categoria", 2, 30);
+        String normalizado = nomeCatalogo(nome, "Nome da categoria", 2, 30).strip();
+        if (normalizado.length() < 2) {
+            throw new IllegalArgumentException("O nome da categoria deve conter pelo menos dois caracteres");
+        }
+        return normalizado;
     }
 
     private static String nomeCatalogo(String valor, String campo, int minimo, int maximo) {
@@ -450,7 +454,7 @@ public class Validar {
     public static Year anoLancamentoJogo(Year anoLancamento, boolean obrigatorio) {
         return estaEntrePeriodo(
                 "Ano de lançamento",
-                Year.of(Year.MIN_VALUE), anoLancamento, Year.now(),
+                Year.of(1), anoLancamento, Year.now(),
                 obrigatorio
         );
     }
@@ -513,6 +517,7 @@ public class Validar {
         }
 
         return new Validador<>(campo, valorTemporal, obrigatorio)
+                .validarNulo()
                 .validar((attr, valor) -> valor.ifPresent(data -> {
                     if (data.compareTo(temporalInicial) < 0
                             || data.compareTo(temporalFinal) > 0) {

@@ -91,6 +91,7 @@ public class Usuario extends Entidade<UUID> {
      * Define o e-mail após validá-lo.
      *
      * @param email email
+     * @throws IllegalArgumentException caso o email seja nulo, vazio ou inválido
      */
     public void setEmail(String email) {
         this.email = Validar.email(email);

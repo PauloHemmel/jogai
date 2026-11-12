@@ -2,13 +2,19 @@ package br.ufms.jogai.data.repository;
 
 import br.ufms.jogai.data.DefaultCategoriasJogo;
 import br.ufms.jogai.domain.jogo.CategoriaJogo;
+import br.ufms.jogai.domain.usuario.Usuario;
+import br.ufms.jogai.domain.usuario.UsuarioRepository;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -144,6 +150,51 @@ class CategoriaFirestoreMapRepositoryTest {
 
     private static CategoriaJogo categoria(String nome, String descricao) {
         return CategoriaJogo.create(nome, descricao);
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", "  Descrição com espaços  "})
+    void preservaDescricaoOpcionalNaCriacaoENaAtualizacao(String descricao) throws Exception {
+        var categoria = categoria("Estratégia", descricao);
+        aguardar(repository.create(categoria));
+        assertCategoria(categoria, aguardar(repository.get(categoria.getTag())).orElseThrow());
+        categoria.setDescricao(descricao == null ? "Preenchida depois" : null);
+        aguardar(repository.save(categoria));
+        assertCategoria(categoria, aguardar(repository.get(categoria.getTag())).orElseThrow());
+    }
+
+    @Test
+    void normalizaNomeNasConsultasSemMudarBuscaExata() throws Exception {
+        aguardar(repository.create(categoria("  Jogos   de Cartas  ", null)));
+        assertTrue(aguardar(repository.buscarPorNome("Jogos de Cartas")).isPresent());
+        assertTrue(aguardar(repository.buscarPorNome("  Jogos   de Cartas  ")).isPresent());
+        assertEquals(1, aguardar(repository.listarPorNome("  Jogos   de Cartas  ", 2)).items().size());
+        assertTrue(aguardar(repository.buscarPorNome("Jogos")).isEmpty());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " ", "X", " A ", "Nome\nInválido"})
+    void rejeitaNomeInvalidoNasConsultas(String nome) {
+        assertThrows(IllegalArgumentException.class, () -> repository.buscarPorNome(nome));
+        assertThrows(IllegalArgumentException.class, () -> repository.listarPorNome(nome));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void usuariosECategoriasFicamEmColecoesDiferentes(boolean usarPojo) throws Exception {
+        UsuarioRepository usuarios = usarPojo
+                ? new UsuarioFirestorePojoRepository(db) : new UsuarioFirestoreMapRepository(db);
+        var usuario = Usuario.create("Maria Silva", "maria_silva", "maria@example.com", "67996122801",
+                LocalDate.of(1990, 1, 1));
+        aguardar(usuarios.create(usuario));
+        aguardar(repository.create(categoria("Estratégia", null)));
+
+        assertEquals(1, aguardar(usuarios.getAll()).size());
+        assertEquals(1, aguardar(repository.getAll()).size());
+        assertTrue(db.collection("usuarios").document(usuario.getId().toString()).get().get().exists());
+        assertTrue(db.collection("categoriasJogo").document("estrategia").get().get().exists());
     }
 
     private static void assertCategoria(CategoriaJogo esperado, CategoriaJogo atual) {

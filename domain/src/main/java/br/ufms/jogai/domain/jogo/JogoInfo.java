@@ -8,7 +8,7 @@ import java.util.UUID;
 public record JogoInfo(UUID id, String nome, String editora, Set<CategoriaJogo> categorias) {
 
     public JogoInfo {
-        id = Validar.uuid(id);
+        id = Validar.notNull(id, "A referência ao jogo deve conter um identificador");
     }
 
     public JogoInfo(Jogo jogo) {

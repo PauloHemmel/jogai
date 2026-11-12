@@ -1,4 +1,9 @@
-# Cadastro de usuários
+# Persistência
+
+Os repositórios de Categoria e Empréstimo, com exemplos, formato dos documentos e
+comandos de teste, estão no [guia de Categoria e Empréstimo](docs/repositorios-categoria-emprestimo.md).
+
+## Cadastro de usuários
 
 `UsuarioRepository.cadastrar(usuario)` cria um usuário e rejeita id, email ou
 telefone já utilizados. `save(usuario)` mantém o comportamento de criar ou

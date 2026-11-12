@@ -52,10 +52,9 @@ class UsuarioValidationTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "sem-arroba", "a@@b.com", "@b.com", "a@", "a@localhost", "a b@example.com", "a@b.c", "a@b.12", "a@b.com\nxyz"})
     void rejeitaEmailNaCriacaoENaAlteracao(String email) {
-        Class<? extends RuntimeException> tipo = email == null ? NullPointerException.class : IllegalArgumentException.class;
-        assertThrows(tipo, () -> usuario("João Silva", email, "67999991234", LocalDate.of(1990, 1, 1)));
+        assertThrows(IllegalArgumentException.class, () -> usuario("João Silva", email, "67999991234", LocalDate.of(1990, 1, 1)));
         var u = valido();
-        assertThrows(tipo, () -> u.setEmail(email));
+        assertThrows(IllegalArgumentException.class, () -> u.setEmail(email));
         assertEquals("joao@example.com", u.getEmail());
     }
 

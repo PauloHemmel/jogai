@@ -20,10 +20,9 @@ class ReconstituicaoValidationTest {
         var id = UUID.randomUUID();
         var nascimento = LocalDate.of(1990, 1, 1);
         var cadastro = Instant.parse("2020-01-01T00:00:00Z");
-        Class<? extends RuntimeException> erroEmail = texto == null ? NullPointerException.class : IllegalArgumentException.class;
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(id, texto, "a@b.com", "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
-                () -> assertThrows(erroEmail, () -> UsuarioTestes.reconstituir(id, "João Silva", texto, "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
+                () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(id, "João Silva", texto, "67999991234", nascimento, cadastro, StatusUsuario.ATIVO)),
                 () -> assertThrows(IllegalArgumentException.class, () -> UsuarioTestes.reconstituir(id, "João Silva", "a@b.com", texto, nascimento, cadastro, StatusUsuario.ATIVO)),
                 () -> assertThrows(IllegalArgumentException.class, () -> Jogo.reconstitute(id, false).nomeEditora(texto, "Devir").numeroJogadores(2, 4).categorias(JogoValidationTest.categoria()).build()),
                 () -> assertThrows(IllegalArgumentException.class, () -> Jogo.reconstitute(id, false).nomeEditora("Catan", texto).numeroJogadores(2, 4).categorias(JogoValidationTest.categoria()).build()),

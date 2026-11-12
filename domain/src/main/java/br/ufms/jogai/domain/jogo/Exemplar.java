@@ -44,7 +44,7 @@ public class Exemplar extends Entidade<UUID> {
         Validar.nomeJogo(jogoInfo.nome());
         Validar.nomeEditora(jogoInfo.editora());
         Validar.categoriasJogo(jogoInfo.categorias());
-        Validar.uuid(proprietarioInfo.id());
+        Validar.notNull(proprietarioInfo.id(), "A referência ao proprietário deve conter um identificador");
         Validar.nomePessoa(proprietarioInfo.nome(), true);
         Validar.notNull(proprietarioInfo.email(), "O email do proprietário não pode ser nulo");
         Validar.email(proprietarioInfo.email());
