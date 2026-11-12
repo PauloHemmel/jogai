@@ -17,7 +17,7 @@ public class UsuarioFirestoreMapRepository extends FirestoreMapRepository<Usuari
     }
 
     public UsuarioFirestoreMapRepository(Firestore firestore) {
-        super(Objects.requireNonNull(firestore).collection("categoriasJogo"),
+        super(Objects.requireNonNull(firestore).collection("usuarios"),
                 Set.of("email", "telefone"));
     }
 

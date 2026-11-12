@@ -23,7 +23,7 @@ public class UsuarioFirestorePojoRepository extends FirestorePojoRepository<Usua
     }
 
     public UsuarioFirestorePojoRepository(Firestore firestore) {
-        super(Objects.requireNonNull(firestore).collection("categoriasJogo"),
+        super(Objects.requireNonNull(firestore).collection("usuarios"),
                 UsuarioDocument.class, UsuarioDocument::new);
     }
 
