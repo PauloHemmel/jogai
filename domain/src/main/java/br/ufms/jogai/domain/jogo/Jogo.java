@@ -250,7 +250,13 @@ public class Jogo extends Entidade<UUID> {
         }
 
         public Builder duracaoPartida(Integer tempoMinimoMin, Integer tempoMaximoMin) {
-            this.duracaoPartida = new DuracaoPartida(tempoMinimoMin, tempoMaximoMin);
+            return duracaoPartida(new DuracaoPartida(
+                    tempoMinimoMin == null ? null : Duration.ofMinutes(tempoMinimoMin),
+                    tempoMaximoMin == null ? null : Duration.ofMinutes(tempoMaximoMin)));
+        }
+
+        public Builder duracaoPartida(DuracaoPartida duracaoPartida) {
+            this.duracaoPartida = duracaoPartida;
             return this;
         }
 

@@ -1,5 +1,9 @@
 # Persistência
 
+O [guia de Firebase e repositórios](docs/firebase.md) explica a conexão com o projeto
+existente, as credenciais locais, as cinco entidades implementadas e a verificação
+de acesso sem alterar documentos.
+
 Os repositórios de Categoria e Empréstimo, com exemplos, formato dos documentos e
 comandos de teste, estão no [guia de Categoria e Empréstimo](docs/repositorios-categoria-emprestimo.md).
 

@@ -22,3 +22,11 @@ tasks.withType<JavaExec>().configureEach {
     // gRPC Netty uses native libraries; opt in explicitly on JDK 25+.
     jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
+
+tasks.register<JavaExec>("verificarFirebase") {
+    group = "verification"
+    description = "Verifica o acesso ao projeto Firebase com uma consulta somente de leitura."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass = "br.ufms.jogai.data.Main"
+    workingDir = rootProject.projectDir
+}
